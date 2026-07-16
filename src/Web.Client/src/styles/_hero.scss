@@ -1,9 +1,9 @@
 @use 'mixins' as *;
 
-/* Full-width search page banner — extends behind header */
+/* Full-width search page banner — top only, behind header */
 .search-banner {
   width: 100vw;
-  height: calc(560px + var(--header-h));
+  height: calc(420px + var(--header-h));
   position: fixed;
   top: 0;
   left: 50%;
@@ -29,26 +29,26 @@
   );
 }
 
-/* Hero — positioned on top of search banner */
+/* Hero — positioned on top of search banner, fully visible on load */
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: 2.5rem;
   align-items: center;
-  padding: 3.5rem 0 1.5rem;
+  padding: 2rem 0 1.5rem;
   position: relative;
   z-index: 1;
-  margin-top: calc(var(--header-h) + 80px);
+  margin-top: calc(var(--header-h) + 20px);
 
   @include below($bp-sidebar) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
-    margin-top: calc(var(--header-h) + 60px);
+    margin-top: calc(var(--header-h) + 15px);
   }
 
   @include below($bp-mobile) {
-    padding: 1.75rem 0 1rem;
-    margin-top: calc(var(--header-h) + 40px);
+    padding: 1.25rem 0 1rem;
+    margin-top: calc(var(--header-h) + 10px);
   }
 }
 
