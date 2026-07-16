@@ -11,4 +11,4 @@ export const STOCK_HOME_PHOTOS = [
 
 /** Owner-and-tenant handshake — backs the "list your property" call-to-action band. */
 export const PARTNERSHIP_PHOTO =
-  'https://images.unsplash.com/photo-1600596542815-ffad4c1539da?w=1600&q=80&auto=format&fit=crop';
+  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1600&h=400&fit=crop';
