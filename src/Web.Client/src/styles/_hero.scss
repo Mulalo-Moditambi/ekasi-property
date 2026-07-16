@@ -1,11 +1,10 @@
 @use 'mixins' as *;
 
-/* Full-width search page banner — top only, behind header */
+/* Full-width search page banner — top only, scrolls with content */
 .search-banner {
   width: 100vw;
   height: calc(420px + var(--header-h));
-  position: fixed;
-  top: 0;
+  position: relative;
   left: 50%;
   right: 50%;
   margin-left: -50vw;
@@ -13,8 +12,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-  z-index: -1;
+  background-attachment: scroll;
 }
 
 .search-banner::after {
@@ -38,17 +36,17 @@
   padding: 2rem 0 1.5rem;
   position: relative;
   z-index: 1;
-  margin-top: calc(var(--header-h) + 20px);
+  margin-top: -380px;
 
   @include below($bp-sidebar) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
-    margin-top: calc(var(--header-h) + 15px);
+    margin-top: -360px;
   }
 
   @include below($bp-mobile) {
     padding: 1.25rem 0 1rem;
-    margin-top: calc(var(--header-h) + 10px);
+    margin-top: -340px;
   }
 }
 
