@@ -23,8 +23,8 @@ export function Layout() {
               <NavLink to="/list-property" className="cta">
                 List a Property
               </NavLink>
-              <button type="button" className="link-button" onClick={handleLogout}>
-                Log out
+              <button type="button" className="header-logout-button" onClick={handleLogout} title="Sign out of your account">
+                <span>↗</span> Log out
               </button>
             </>
           ) : (

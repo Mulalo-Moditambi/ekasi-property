@@ -1,0 +1,107 @@
+@use 'mixins' as *;
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: var(--header-h);
+  padding: 0 1.5rem;
+  @include glass(rgba(255, 255, 255, 0.80), 20px, rgba(255, 255, 255, 0.97));
+  border-bottom: 1px solid rgba(229, 225, 218, 0.5);
+  box-shadow: 0 2px 8px rgba(31, 36, 48, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  @include below($bp-mobile) {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem;
+  }
+}
+
+// A whisper-thin gold shimmer under the header — a small, deliberate
+// "someone designed this" detail rather than a plain flat border.
+.site-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 151, 76, 0.55), transparent);
+}
+
+.brand {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+.brand span {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.site-header nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.site-header a {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.site-header a.active {
+  color: var(--brand);
+}
+
+.site-header a.cta {
+  background: var(--brand);
+  color: #fff;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+}
+
+.site-header a.cta:hover {
+  background: var(--brand-dark);
+}
+
+.header-logout-button {
+  background: none;
+  border: 1px solid rgba(232, 89, 12, 0.3);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.45rem 0.8rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    color: var(--brand);
+    border-color: var(--brand);
+    background: rgba(232, 89, 12, 0.08);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  span {
+    font-size: 0.95rem;
+    display: inline-flex;
+  }
+}
