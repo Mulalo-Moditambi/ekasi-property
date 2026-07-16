@@ -66,17 +66,9 @@ export function SearchPage() {
 
   const totalPages = result ? Math.max(1, Math.ceil(result.totalCount / result.pageSize)) : 1;
 
-  // Combine real listing photos with stock photos, ensuring we have 3 reliable images.
-  // Stock photos (from Unsplash) are always included as primary fallback.
-  const realListingPhotos = (result?.items ?? [])
-    .map((p) => p.imageUrls[0])
-    .filter((url): url is string => !!url)
-    .slice(0, 1);
-
-  const collagePhotos = [
-    ...realListingPhotos,
-    ...STOCK_HOME_PHOTOS,
-  ].slice(0, 3);
+  // Use only curated Unsplash stock photos for hero collage.
+  // Real listing images are shown in the search results below.
+  const collagePhotos = STOCK_HOME_PHOTOS;
 
   return (
     <div className="page">
