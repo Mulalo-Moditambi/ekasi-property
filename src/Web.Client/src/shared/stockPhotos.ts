@@ -5,9 +5,9 @@
  * the Ekasi Property brand.
  */
 export const STOCK_HOME_PHOTOS = [
-  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1580587771525-78991c7e1138?w=800&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80&auto=format&fit=crop',
 ];
 
 /** Owner-and-tenant handshake — backs the "list your property" call-to-action band. */
