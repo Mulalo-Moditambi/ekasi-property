@@ -1,5 +1,32 @@
 @use 'mixins' as *;
 
+/* Full-width search page banner */
+.search-banner {
+  width: 100vw;
+  height: 280px;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.search-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(24, 16, 10, 0) 0%,
+    rgba(24, 16, 10, 0.3) 60%,
+    rgba(24, 16, 10, 0.5) 100%
+  );
+}
+
 /* Hero */
 .hero {
   display: grid;

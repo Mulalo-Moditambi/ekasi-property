@@ -12,3 +12,7 @@ export const STOCK_HOME_PHOTOS = [
 /** Owner-and-tenant handshake — backs the "list your property" call-to-action band. */
 export const PARTNERSHIP_PHOTO =
   'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1600&h=400&fit=crop';
+
+/** Full-width banner image for search page header. */
+export const SEARCH_BANNER_PHOTO =
+  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=2000&h=300&fit=crop';
