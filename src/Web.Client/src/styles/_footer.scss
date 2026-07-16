@@ -1,10 +1,15 @@
 @use 'mixins' as *;
 
 .site-footer {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.9rem;
-  background: linear-gradient(180deg, #ffffff 0%, #faf4ee 100%);
-  border-top: 1px solid var(--border);
+  background: linear-gradient(
+    100deg,
+    rgba(24, 16, 10, 0.95) 25%,
+    rgba(24, 16, 10, 0.85) 55%,
+    rgba(232, 89, 12, 0.25) 100%
+  );
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: 2.5rem;
 }
 
@@ -38,25 +43,25 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--ink);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .footer-col a,
 .footer-col .link-button {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.75);
   text-decoration: none;
   font-weight: 500;
 }
 
 .footer-col a:hover,
 .footer-col .link-button:hover {
-  color: var(--brand-dark);
+  color: #fff;
 }
 
 .logout-button {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--muted);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.75);
   font: inherit;
   font-weight: 500;
   cursor: pointer;
@@ -75,9 +80,9 @@
 }
 
 .logout-button:hover:not(:disabled) {
-  color: var(--brand-dark);
-  border-color: var(--brand);
-  background: rgba(232, 89, 12, 0.05);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .logout-button:active:not(:disabled) {
@@ -85,9 +90,10 @@
 }
 
 .footer-bottom {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
   padding: 1rem 1.5rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .footer-bottom p {
