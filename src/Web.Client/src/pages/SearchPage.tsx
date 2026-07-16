@@ -5,7 +5,7 @@ import { searchProperties } from '../features/properties/api';
 import { PropertyCard } from '../features/properties/components/PropertyCard';
 import { PropertyFilters } from '../features/properties/components/PropertyFilters';
 import { Pagination } from '../shared/components/Pagination';
-import { PARTNERSHIP_PHOTO, STOCK_HOME_PHOTOS, SEARCH_BANNER_PHOTO } from '../shared/stockPhotos';
+import { PARTNERSHIP_PHOTO, STOCK_HOME_PHOTOS } from '../shared/stockPhotos';
 import type { PagedResult, PropertySort, PropertySummary, SearchFilters } from '../features/properties/types';
 import { propertySortLabels } from '../features/properties/types';
 
@@ -72,7 +72,6 @@ export function SearchPage() {
 
   return (
     <div className="page">
-      <section className="search-banner" style={{ backgroundImage: `url('${SEARCH_BANNER_PHOTO}')` }} />
       <section className="hero">
         <div className="hero-copy">
           <p className="hero-eyebrow">Township rentals &amp; homes</p>
