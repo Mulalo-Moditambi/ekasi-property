@@ -197,8 +197,7 @@ export function SearchPage() {
         </ol>
       </section>
 
-      <section className="owner-cta">
-        <img className="cta-bg" src={PARTNERSHIP_PHOTO} alt="" loading="lazy" />
+      <section className="owner-cta" style={{ backgroundImage: `url('${PARTNERSHIP_PHOTO}')` }}>
         <div className="cta-content">
           <h2>Own a backroom, cottage or house?</h2>
           <p>

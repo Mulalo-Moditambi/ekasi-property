@@ -209,7 +209,7 @@
   font-size: 0.92rem;
 }
 
-/* Owner call-to-action band — photo with gradient scrim */
+/* Owner call-to-action band — photo background with gradient scrim */
 .owner-cta {
   position: relative;
   display: flex;
@@ -220,14 +220,10 @@
   overflow: hidden;
   color: #fff;
   box-shadow: var(--shadow-lg);
-}
-
-.owner-cta .cta-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .owner-cta::after {
