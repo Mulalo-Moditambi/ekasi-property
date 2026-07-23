@@ -96,7 +96,8 @@ public sealed class RefreshTokenCommandHandlerTests : BaseHandlerTest
             Email = "test@example.com",
             FirstName = "Test",
             LastName = "User",
-            PasswordHash = "hash"
+            PasswordHash = "hash",
+            PhoneNumber = "+27821234567"
         };
 
         context.Users.Add(user);

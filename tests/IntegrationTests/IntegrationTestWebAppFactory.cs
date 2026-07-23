@@ -26,6 +26,14 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
         // Relax rate limiting so the test suite is not throttled.
         builder.UseSetting("RateLimiting:Global:PermitLimit", "100000");
         builder.UseSetting("RateLimiting:Authentication:PermitLimit", "100000");
+
+        // Deterministic PayFast settings for signature generation/validation in tests.
+        // ValidateUrl points at an unreachable host so the remote ITN re-validation call fails fast
+        // and falls back to the already-passed local signature check, instead of hitting the real sandbox.
+        builder.UseSetting("PayFast:MerchantId", "10000100");
+        builder.UseSetting("PayFast:MerchantKey", "46f0cd694581a");
+        builder.UseSetting("PayFast:Passphrase", "test-passphrase");
+        builder.UseSetting("PayFast:ValidateUrl", "http://127.0.0.1:1/invalid");
     }
 
     public async Task InitializeAsync()

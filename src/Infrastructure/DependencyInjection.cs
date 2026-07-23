@@ -1,11 +1,17 @@
 ﻿using System.Text;
 using Application.Abstractions.Authentication;
+using Application.Abstractions.Billing;
 using Application.Abstractions.Data;
+using Application.Abstractions.Notifications;
+using Application.Abstractions.Payments;
 using Application.Abstractions.Storage;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
+using Infrastructure.Billing;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Notifications;
+using Infrastructure.Payments;
 using Infrastructure.Storage;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using SharedKernel;
 
@@ -29,7 +36,8 @@ public static class DependencyInjection
             .AddDatabase(configuration)
             .AddHealthChecks(configuration)
             .AddAuthenticationInternal(configuration)
-            .AddAuthorizationInternal();
+            .AddAuthorizationInternal()
+            .AddBilling(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -103,6 +111,25 @@ public static class DependencyInjection
         services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddBilling(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<PayFastOptions>(configuration.GetSection("PayFast"));
+        services.Configure<WhatsAppOptions>(configuration.GetSection("WhatsApp"));
+
+        services.AddHttpClient("PayFast", client => client.Timeout = TimeSpan.FromSeconds(10));
+        services.AddHttpClient("WhatsApp", client => client.Timeout = TimeSpan.FromSeconds(10));
+
+        services.AddSingleton<PayFastSignatureService>();
+        services.AddScoped<IPaymentGateway, PayFastPaymentGateway>();
+        services.AddScoped<IPaymentNotificationValidator, PayFastNotificationValidator>();
+        services.AddScoped<IWhatsAppSender, WhatsAppCloudApiSender>();
+
+        services.AddScoped<ISubscriptionSweepService, SubscriptionSweepService>();
+        services.AddHostedService<SubscriptionSweepBackgroundService>();
 
         return services;
     }

@@ -102,7 +102,8 @@ public sealed class LoginUserCommandHandlerTests : BaseHandlerTest
             Email = Email,
             FirstName = "Test",
             LastName = "User",
-            PasswordHash = "hash"
+            PasswordHash = "hash",
+            PhoneNumber = "+27821234567"
         });
 
         await context.SaveChangesAsync();

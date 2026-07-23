@@ -10,7 +10,7 @@ namespace Application.UnitTests.Users;
 public sealed class RegisterUserCommandHandlerTests : BaseHandlerTest
 {
     private static RegisterUserCommand Command =>
-        new("test@example.com", "Test", "User", "Password123");
+        new("test@example.com", "Test", "User", "Password123", "+27821234567");
 
     [Fact]
     public async Task Handle_Should_ReturnConflict_WhenEmailIsNotUnique()
@@ -23,11 +23,14 @@ public sealed class RegisterUserCommandHandlerTests : BaseHandlerTest
             Email = Command.Email,
             FirstName = "Existing",
             LastName = "User",
-            PasswordHash = "hash"
+            PasswordHash = "hash",
+            PhoneNumber = "+27821234567"
         });
         await context.SaveChangesAsync();
 
-        var handler = new RegisterUserCommandHandler(context, Substitute.For<IPasswordHasher>());
+        IDateTimeProvider dateTimeProvider = Substitute.For<IDateTimeProvider>();
+
+        var handler = new RegisterUserCommandHandler(context, Substitute.For<IPasswordHasher>(), dateTimeProvider);
 
         // Act
         Result<Guid> result = await handler.Handle(Command, CancellationToken.None);
@@ -46,7 +49,10 @@ public sealed class RegisterUserCommandHandlerTests : BaseHandlerTest
         IPasswordHasher passwordHasher = Substitute.For<IPasswordHasher>();
         passwordHasher.Hash(Command.Password).Returns("hashed-password");
 
-        var handler = new RegisterUserCommandHandler(context, passwordHasher);
+        IDateTimeProvider dateTimeProvider = Substitute.For<IDateTimeProvider>();
+        dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
+
+        var handler = new RegisterUserCommandHandler(context, passwordHasher, dateTimeProvider);
 
         // Act
         Result<Guid> result = await handler.Handle(Command, CancellationToken.None);
@@ -57,6 +63,7 @@ public sealed class RegisterUserCommandHandlerTests : BaseHandlerTest
         User user = await context.Users.SingleAsync(u => u.Id == result.Value);
         user.Email.ShouldBe(Command.Email);
         user.PasswordHash.ShouldBe("hashed-password");
+        user.PhoneNumber.ShouldBe(Command.PhoneNumber);
         user.DomainEvents.ShouldContain(domainEvent => domainEvent is UserRegisteredDomainEvent);
     }
 }

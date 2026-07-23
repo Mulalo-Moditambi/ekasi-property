@@ -6,6 +6,10 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
@@ -15,6 +19,7 @@
 
   <ItemGroup>
 	<InternalsVisibleTo Include="ArchitectureTests" />
+	<InternalsVisibleTo Include="IntegrationTests" />
   </ItemGroup>
 
 </Project>

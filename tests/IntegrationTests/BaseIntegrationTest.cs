@@ -9,9 +9,12 @@ public abstract class BaseIntegrationTest
     protected BaseIntegrationTest(IntegrationTestWebAppFactory factory)
     {
         HttpClient = factory.CreateClient();
+        Services = factory.Services;
     }
 
     protected HttpClient HttpClient { get; }
+
+    protected IServiceProvider Services { get; }
 
     protected sealed record AccessTokens(string AccessToken, string RefreshToken);
 
@@ -24,7 +27,8 @@ public abstract class BaseIntegrationTest
             email,
             firstName = "Test",
             lastName = "User",
-            password = "Password123"
+            password = "Password123",
+            phoneNumber = "+27821234567"
         };
 
         HttpResponseMessage response = await HttpClient.PostAsJsonAsync("users/register", request);

@@ -1,6 +1,7 @@
 ﻿using Application.Abstractions.Data;
 using Domain.Inquiries;
 using Domain.Properties;
+using Domain.Subscriptions;
 using Domain.Users;
 using Infrastructure.DomainEvents;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,10 @@ public sealed class ApplicationDbContext(
     public DbSet<PropertyImage> PropertyImages { get; set; }
 
     public DbSet<Inquiry> Inquiries { get; set; }
+
+    public DbSet<Subscription> Subscriptions { get; set; }
+
+    public DbSet<SubscriptionPayment> SubscriptionPayments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

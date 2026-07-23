@@ -1,4 +1,5 @@
 using Application.Abstractions.Authentication;
+using Application.Abstractions.Subscriptions;
 using Application.Properties.Create;
 using Application.UnitTests.Abstractions;
 using Domain.Properties;
@@ -41,8 +42,9 @@ public sealed class CreatePropertyCommandHandlerTests : BaseHandlerTest
         IUserContext userContext = Substitute.For<IUserContext>();
         userContext.UserId.Returns(Guid.NewGuid());
         IDateTimeProvider dateTimeProvider = Substitute.For<IDateTimeProvider>();
+        ISubscriptionAccessGuard accessGuard = Substitute.For<ISubscriptionAccessGuard>();
 
-        var handler = new CreatePropertyCommandHandler(context, dateTimeProvider, userContext);
+        var handler = new CreatePropertyCommandHandler(context, dateTimeProvider, userContext, accessGuard);
 
         // Act
         Result<Guid> result = await handler.Handle(Command, CancellationToken.None);
@@ -60,8 +62,9 @@ public sealed class CreatePropertyCommandHandlerTests : BaseHandlerTest
         IUserContext userContext = Substitute.For<IUserContext>();
         userContext.UserId.Returns(OwnerId);
         IDateTimeProvider dateTimeProvider = Substitute.For<IDateTimeProvider>();
+        ISubscriptionAccessGuard accessGuard = Substitute.For<ISubscriptionAccessGuard>();
 
-        var handler = new CreatePropertyCommandHandler(context, dateTimeProvider, userContext);
+        var handler = new CreatePropertyCommandHandler(context, dateTimeProvider, userContext, accessGuard);
 
         // Act
         Result<Guid> result = await handler.Handle(Command, CancellationToken.None);
@@ -82,7 +85,8 @@ public sealed class CreatePropertyCommandHandlerTests : BaseHandlerTest
             Email = "owner@example.com",
             FirstName = "Test",
             LastName = "Owner",
-            PasswordHash = "hash"
+            PasswordHash = "hash",
+            PhoneNumber = "+27821234567"
         });
         await context.SaveChangesAsync();
 
@@ -90,8 +94,11 @@ public sealed class CreatePropertyCommandHandlerTests : BaseHandlerTest
         userContext.UserId.Returns(OwnerId);
         IDateTimeProvider dateTimeProvider = Substitute.For<IDateTimeProvider>();
         dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
+        ISubscriptionAccessGuard accessGuard = Substitute.For<ISubscriptionAccessGuard>();
+        accessGuard.EnsureCanCreateListingAsync(OwnerId, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success());
 
-        var handler = new CreatePropertyCommandHandler(context, dateTimeProvider, userContext);
+        var handler = new CreatePropertyCommandHandler(context, dateTimeProvider, userContext, accessGuard);
 
         // Act
         Result<Guid> result = await handler.Handle(Command, CancellationToken.None);
@@ -105,5 +112,39 @@ public sealed class CreatePropertyCommandHandlerTests : BaseHandlerTest
         property.Status.ShouldBe(PropertyStatus.Listed);
         property.Address.Township.ShouldBe("Orlando West");
         property.DomainEvents.ShouldContain(domainEvent => domainEvent is PropertyListedDomainEvent);
+    }
+
+    [Fact]
+    public async Task Handle_Should_ReturnPaymentRequired_WhenSubscriptionDoesNotGrantAccess()
+    {
+        // Arrange
+        await using TestDbContext context = CreateDbContext();
+        context.Users.Add(new User
+        {
+            Id = OwnerId,
+            Email = "owner@example.com",
+            FirstName = "Test",
+            LastName = "Owner",
+            PasswordHash = "hash",
+            PhoneNumber = "+27821234567"
+        });
+        await context.SaveChangesAsync();
+
+        IUserContext userContext = Substitute.For<IUserContext>();
+        userContext.UserId.Returns(OwnerId);
+        IDateTimeProvider dateTimeProvider = Substitute.For<IDateTimeProvider>();
+        ISubscriptionAccessGuard accessGuard = Substitute.For<ISubscriptionAccessGuard>();
+        Error paymentRequired = Domain.Subscriptions.SubscriptionErrors.PaymentRequired(OwnerId);
+        accessGuard.EnsureCanCreateListingAsync(OwnerId, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Failure(paymentRequired));
+
+        var handler = new CreatePropertyCommandHandler(context, dateTimeProvider, userContext, accessGuard);
+
+        // Act
+        Result<Guid> result = await handler.Handle(Command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.ShouldBeTrue();
+        result.Error.ShouldBe(paymentRequired);
     }
 }

@@ -1,6 +1,7 @@
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Messaging;
+using Application.Abstractions.Subscriptions;
 using Domain.Properties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -12,7 +13,8 @@ internal sealed class RelistPropertyCommandHandler(
     IApplicationDbContext context,
     IDateTimeProvider dateTimeProvider,
     IUserContext userContext,
-    HybridCache cache)
+    HybridCache cache,
+    ISubscriptionAccessGuard subscriptionAccessGuard)
     : ICommandHandler<RelistPropertyCommand>
 {
     public async Task<Result> Handle(RelistPropertyCommand command, CancellationToken cancellationToken)
@@ -25,6 +27,13 @@ internal sealed class RelistPropertyCommandHandler(
         if (property is null)
         {
             return Result.Failure(PropertyErrors.NotFound(command.PropertyId));
+        }
+
+        Result accessResult = await subscriptionAccessGuard.EnsureCanListAsync(property.OwnerId, cancellationToken);
+
+        if (accessResult.IsFailure)
+        {
+            return accessResult;
         }
 
         Result result = property.Relist(dateTimeProvider.UtcNow);
