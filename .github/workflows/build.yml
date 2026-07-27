@@ -5,12 +5,17 @@ on:
   push:
     branches:
       - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 env:
   DOTNET_VERSION: "10.x"
 
 jobs:
-  build:
+  build-backend:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,13 +27,35 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore
-        run: dotnet restore CleanArchitecture.slnx
+        run: dotnet restore ekasi-property.slnx
 
       - name: Build
-        run: dotnet build CleanArchitecture.slnx --configuration Release --no-restore
+        run: dotnet build ekasi-property.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test CleanArchitecture.slnx --configuration Release --no-restore --no-build
+        run: dotnet test ekasi-property.slnx --configuration Release --no-restore --no-build
 
       - name: Publish
-        run: dotnet publish CleanArchitecture.slnx --configuration Release --no-restore --no-build
+        run: dotnet publish ekasi-property.slnx --configuration Release --no-restore --no-build
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/Web.Client
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: 'npm'
+          cache-dependency-path: src/Web.Client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
