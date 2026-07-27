@@ -54,8 +54,14 @@ internal sealed class SearchPropertiesQueryHandler(
 
         int totalCount = await properties.CountAsync(cancellationToken);
 
-        List<PropertySummaryResponse> items = await properties
-            .OrderByDescending(p => p.CreatedAt)
+        IOrderedQueryable<Property> ordered = query.Sort switch
+        {
+            "price_asc" => properties.OrderBy(p => p.Price).ThenByDescending(p => p.CreatedAt),
+            "price_desc" => properties.OrderByDescending(p => p.Price).ThenByDescending(p => p.CreatedAt),
+            _ => properties.OrderByDescending(p => p.CreatedAt),
+        };
+
+        List<PropertySummaryResponse> items = await ordered
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(p => new PropertySummaryResponse

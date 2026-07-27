@@ -1,5 +1,5 @@
-import { request } from './client';
-import type { Inquiry, SubmitInquiryRequest } from '../types/inquiry';
+import { request } from '../../shared/api/client';
+import type { Inquiry, SubmitInquiryRequest } from './types';
 
 export function submitInquiry(propertyId: string, body: SubmitInquiryRequest): Promise<string> {
   return request<string>(`/properties/${propertyId}/inquiries`, {

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../features/auth/AuthContext';
 import { searchProperties } from '../features/properties/api';
 import { PropertyCard } from '../features/properties/components/PropertyCard';
@@ -23,6 +23,7 @@ const HOW_IT_WORKS = [
 
 export function SearchPage() {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
   const [filters, setFilters] = useState<SearchFilters>({});
   const [sort, setSort] = useState<PropertySort>('newest');
   const [result, setResult] = useState<PagedResult<PropertySummary> | null>(null);
@@ -31,6 +32,7 @@ export function SearchPage() {
   const [view, setView] = useState<ViewMode>(() =>
     localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'grid',
   );
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   function switchView(mode: ViewMode) {
     setView(mode);
@@ -53,6 +55,14 @@ export function SearchPage() {
   useEffect(() => {
     void runSearch({}, 1, 'newest');
   }, []);
+
+  useEffect(() => {
+    if ((location.state as any)?.scrollToListings && !loading && toolbarRef.current) {
+      toolbarRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Clear the state so refresh doesn't trigger scroll again
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [loading, location.state]);
 
   function changeSort(next: PropertySort) {
     setSort(next);
@@ -137,7 +147,7 @@ export function SearchPage() {
             </div>
           ) : (
             <div className={view === 'list' ? 'results results-list' : 'results'}>
-              <div className="results-toolbar">
+              <div className="results-toolbar" ref={toolbarRef}>
                 <p className="muted result-count">
                   {result.totalCount} listing{result.totalCount === 1 ? '' : 's'} found
                 </p>

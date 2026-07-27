@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { getAccessToken, setAccessToken } from '../api/client';
-import { login as loginRequest } from '../api/auth';
+import { getAccessToken, setAccessToken } from '../../shared/api/client';
+import { login as loginRequest } from './api';
 
 interface AuthState {
   userId: string | null;
@@ -17,8 +17,15 @@ function userIdFromToken(token: string | null): string | null {
     return null;
   }
 
+  const segment = token.split('.')[1];
+  if (!segment) {
+    return null;
+  }
+
   try {
-    const payload = JSON.parse(atob(token.split('.')[1])) as { sub?: string };
+    // JWT payloads are base64url-encoded — restore standard base64 before decoding.
+    const base64 = segment.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(base64)) as { sub?: string };
     return payload.sub ?? null;
   } catch {
     return null;

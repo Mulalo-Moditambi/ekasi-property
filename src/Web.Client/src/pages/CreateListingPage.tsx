@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createListing, uploadImages } from '../api/properties';
-import { useAuth } from '../auth/AuthContext';
-import { ListingType, PropertyType, propertyTypeLabels } from '../types/property';
+import { createListing, uploadImages } from '../features/properties/api';
+import { useAuth } from '../features/auth/AuthContext';
+import { Breadcrumbs } from '../shared/components/Breadcrumbs';
+import { ListingType, PropertyType, propertyTypeLabels } from '../features/properties/types';
 
 const MAX_PHOTOS = 10;
 
@@ -76,6 +77,7 @@ export function CreateListingPage() {
 
   return (
     <div className="page narrow">
+      <Breadcrumbs items={[{ label: 'Home', to: '/' }, { label: 'List a property' }]} />
       <h1>List a property</h1>
       <p className="muted">
         Renting out a backroom or cottage, or selling a house? Put it in front of people looking ekasi.

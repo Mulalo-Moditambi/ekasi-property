@@ -11,4 +11,5 @@ public sealed record SearchPropertiesQuery(
     decimal? MaxPrice,
     int? MinBedrooms,
     int Page = 1,
-    int PageSize = 20) : IQuery<SearchPropertiesResponse>;
+    int PageSize = 20,
+    string? Sort = null) : IQuery<SearchPropertiesResponse>;

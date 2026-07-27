@@ -1,4 +1,4 @@
-import { request } from './client';
+import { request } from '../../shared/api/client';
 
 export interface AccessTokens {
   accessToken: string;

@@ -82,6 +82,14 @@ export interface SearchFilters {
   minBedrooms?: number;
 }
 
+export type PropertySort = 'newest' | 'price_asc' | 'price_desc';
+
+export const propertySortLabels: Record<PropertySort, string> = {
+  newest: 'Newest first',
+  price_asc: 'Price: low to high',
+  price_desc: 'Price: high to low',
+};
+
 export interface PagedResult<T> {
   items: T[];
   page: number;

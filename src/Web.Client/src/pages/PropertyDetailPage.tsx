@@ -9,12 +9,13 @@ import {
   relistProperty,
   uploadImages,
   withdrawListing,
-} from '../api/properties';
-import { useAuth } from '../auth/AuthContext';
-import { ContactOwnerForm } from '../components/ContactOwnerForm';
-import { ImageCarousel } from '../components/ImageCarousel';
-import { InquiriesPanel } from '../components/InquiriesPanel';
-import type { PropertyDetail } from '../types/property';
+} from '../features/properties/api';
+import { useAuth } from '../features/auth/AuthContext';
+import { Breadcrumbs } from '../shared/components/Breadcrumbs';
+import { ContactOwnerForm } from '../features/inquiries/components/ContactOwnerForm';
+import { InquiriesPanel } from '../features/inquiries/components/InquiriesPanel';
+import { PropertyGallery } from '../features/properties/components/PropertyGallery';
+import type { PropertyDetail } from '../features/properties/types';
 import {
   ListingType,
   PropertyStatus,
@@ -22,7 +23,7 @@ import {
   listingTypeLabels,
   propertyStatusLabels,
   propertyTypeLabels,
-} from '../types/property';
+} from '../features/properties/types';
 
 export function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -113,84 +114,109 @@ export function PropertyDetailPage() {
 
   return (
     <div className="page detail">
-      <div className="card-badges">
-        <span className="badge badge-listing">{listingTypeLabels[property.listingType]}</span>
-        <span className="badge badge-type">{propertyTypeLabels[property.propertyType]}</span>
-        <span className={`badge status-${property.status}`}>{propertyStatusLabels[property.status]}</span>
-      </div>
+      <Breadcrumbs
+        items={[
+          { label: 'Home', to: '/' },
+          { label: property.township },
+          { label: property.title },
+        ]}
+      />
 
-      <ImageCarousel urls={property.images.map((image) => image.url)} alt={property.title} />
+      <header className="detail-header">
+        <h1>{property.title}</h1>
+        <p className="location">
+          {property.street}, {property.township}, {property.city}, {property.province}, {property.postalCode}
+        </p>
+        <p className="price">{formatPrice(property.price, property.listingType)}</p>
+      </header>
 
-      <h1>{property.title}</h1>
-      <p className="price">{formatPrice(property.price, property.listingType)}</p>
-      <p className="location">
-        {property.street}, {property.township}, {property.city}, {property.province}, {property.postalCode}
-      </p>
+      <div className="detail-layout">
+        <div className="detail-main">
+          <PropertyGallery urls={property.images.map((image) => image.url)} alt={property.title} />
 
-      <ul className="features">
-        <li>{property.bedrooms} bedroom{property.bedrooms === 1 ? '' : 's'}</li>
-        <li>{property.bathrooms} bathroom{property.bathrooms === 1 ? '' : 's'}</li>
-        {property.hasElectricity && <li>Electricity</li>}
-        {property.waterIncluded && <li>Water included</li>}
-        {property.hasOwnEntrance && <li>Own entrance</li>}
-        {property.hasParking && <li>Parking</li>}
-      </ul>
-
-      <section className="description">
-        <h2>About this property</h2>
-        <p>{property.description}</p>
-      </section>
-
-      {!isOwner && isListed && <ContactOwnerForm propertyId={property.id} />}
-
-      {isOwner && <InquiriesPanel propertyId={property.id} />}
-
-      {isOwner && (
-        <section className="owner-actions">
-          <h2>Manage your listing</h2>
-          {error && <p className="error">{error}</p>}
-          <div className="actions">
-            {isListed && property.listingType === ListingType.Rent && (
-              <button type="button" disabled={busy} onClick={() => runAction(markRented)}>
-                Mark as rented
-              </button>
-            )}
-            {isListed && property.listingType === ListingType.Sale && (
-              <button type="button" disabled={busy} onClick={() => runAction(markSold)}>
-                Mark as sold
-              </button>
-            )}
-            {isListed && (
-              <button type="button" disabled={busy} onClick={() => runAction(withdrawListing)}>
-                Withdraw
-              </button>
-            )}
-            {(property.status === PropertyStatus.Rented || property.status === PropertyStatus.Withdrawn) && (
-              <button type="button" disabled={busy} onClick={() => runAction(relistProperty)}>
-                Relist
-              </button>
-            )}
-            <button
-              type="button"
-              disabled={busy || property.images.length >= 10}
-              onClick={() => photoInputRef.current?.click()}
-            >
-              Add photos ({property.images.length}/10)
-            </button>
-            <input
-              ref={photoInputRef}
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,image/webp"
-              hidden
-              onChange={handlePhotosSelected}
-            />
-            <button type="button" className="danger" disabled={busy} onClick={handleDelete}>
-              Delete listing
-            </button>
+          <div className="card-badges detail-tags">
+            <span className="badge badge-listing">{listingTypeLabels[property.listingType]}</span>
+            <span className="badge badge-type">{propertyTypeLabels[property.propertyType]}</span>
+            <span className={`badge status-${property.status}`}>{propertyStatusLabels[property.status]}</span>
           </div>
-        </section>
-      )}
+
+          <ul className="features">
+            <li>{property.bedrooms} bedroom{property.bedrooms === 1 ? '' : 's'}</li>
+            <li>{property.bathrooms} bathroom{property.bathrooms === 1 ? '' : 's'}</li>
+            {property.hasElectricity && <li>Electricity</li>}
+            {property.waterIncluded && <li>Water included</li>}
+            {property.hasOwnEntrance && <li>Own entrance</li>}
+            {property.hasParking && <li>Parking</li>}
+          </ul>
+
+          <section className="description">
+            <h2>About this property</h2>
+            <p>{property.description}</p>
+          </section>
+
+          {isOwner && <InquiriesPanel propertyId={property.id} />}
+        </div>
+
+        <aside className="detail-side">
+          <div className="side-card">
+            {!isOwner && isListed && <ContactOwnerForm propertyId={property.id} />}
+
+            {!isOwner && !isListed && (
+              <p className="muted">
+                This property is currently {propertyStatusLabels[property.status].toLowerCase()} and not taking
+                inquiries.
+              </p>
+            )}
+
+            {isOwner && (
+              <section className="owner-actions">
+                <h2>Manage your listing</h2>
+                {error && <p className="error">{error}</p>}
+                <div className="actions">
+                  {isListed && property.listingType === ListingType.Rent && (
+                    <button type="button" disabled={busy} onClick={() => runAction(markRented)}>
+                      Mark as rented
+                    </button>
+                  )}
+                  {isListed && property.listingType === ListingType.Sale && (
+                    <button type="button" disabled={busy} onClick={() => runAction(markSold)}>
+                      Mark as sold
+                    </button>
+                  )}
+                  {isListed && (
+                    <button type="button" disabled={busy} onClick={() => runAction(withdrawListing)}>
+                      Withdraw
+                    </button>
+                  )}
+                  {(property.status === PropertyStatus.Rented || property.status === PropertyStatus.Withdrawn) && (
+                    <button type="button" disabled={busy} onClick={() => runAction(relistProperty)}>
+                      Relist
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={busy || property.images.length >= 10}
+                    onClick={() => photoInputRef.current?.click()}
+                  >
+                    Add photos ({property.images.length}/10)
+                  </button>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    hidden
+                    onChange={handlePhotosSelected}
+                  />
+                  <button type="button" className="danger" disabled={busy} onClick={handleDelete}>
+                    Delete listing
+                  </button>
+                </div>
+              </section>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

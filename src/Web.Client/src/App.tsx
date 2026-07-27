@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { AuthProvider, useAuth } from './auth/AuthContext';
-import { Layout } from './components/Layout';
+import { AuthProvider, useAuth } from './features/auth/AuthContext';
+import { Layout } from './shared/layout/Layout';
 import { CreateListingPage } from './pages/CreateListingPage';
 import { LoginPage } from './pages/LoginPage';
 import { PropertyDetailPage } from './pages/PropertyDetailPage';

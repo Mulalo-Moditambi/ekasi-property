@@ -21,6 +21,7 @@ internal sealed class Search : IEndpoint
             decimal? minPrice,
             decimal? maxPrice,
             int? minBedrooms,
+            string? sort,
             int page = 1,
             int pageSize = 20) =>
         {
@@ -32,7 +33,8 @@ internal sealed class Search : IEndpoint
                 maxPrice,
                 minBedrooms,
                 page,
-                pageSize);
+                pageSize,
+                sort);
 
             Result<SearchPropertiesResponse> result = await handler.Handle(query, cancellationToken);
 

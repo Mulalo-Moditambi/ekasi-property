@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import type { MouseEvent } from 'react';
+import { ChevronIcon } from '../../../shared/components/icons';
 
 interface ImageCarouselProps {
   urls: string[];
@@ -38,10 +39,10 @@ export function ImageCarousel({ urls, alt }: ImageCarouselProps) {
       {urls.length > 1 && (
         <>
           <button type="button" className="carousel-nav prev" aria-label="Previous photo" onClick={(e) => scroll(e, -1)}>
-            ‹
+            <ChevronIcon direction="left" size={16} />
           </button>
           <button type="button" className="carousel-nav next" aria-label="Next photo" onClick={(e) => scroll(e, 1)}>
-            ›
+            <ChevronIcon direction="right" size={16} />
           </button>
           <span className="carousel-count">{urls.length} photos</span>
         </>

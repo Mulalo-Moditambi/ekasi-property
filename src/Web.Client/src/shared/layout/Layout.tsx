@@ -5,6 +5,11 @@ export function Layout() {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
+  function handleBrowse(e: React.MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
+    navigate('/', { state: { scrollToListings: true } });
+  }
+
   function handleLogout() {
     logout();
     navigate('/');
@@ -17,7 +22,7 @@ export function Layout() {
           ekasi<span>property</span>
         </Link>
         <nav>
-          <NavLink to="/">Browse</NavLink>
+          <NavLink to="/" onClick={handleBrowse}>Browse</NavLink>
           {isAuthenticated ? (
             <>
               <NavLink to="/list-property" className="cta">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { submitInquiry } from '../api/inquiries';
+import { submitInquiry } from '../api';
 
 export function ContactOwnerForm({ propertyId }: { propertyId: string }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });

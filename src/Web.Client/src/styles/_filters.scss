@@ -1,0 +1,129 @@
+@use 'mixins' as *;
+
+/* Property-type chips — the top row of the filter panel */
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.95rem;
+  margin-bottom: 0.95rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.chip {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+  border: 1px solid rgba(229, 225, 218, 0.75);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: #fff;
+  color: var(--brand-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(232, 89, 12, 0.15);
+}
+
+.chip.active {
+  background: var(--gradient-brand);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(232, 89, 12, 0.35);
+}
+
+.chip.active:hover:not(:disabled) {
+  background: var(--gradient-brand);
+  color: #fff;
+}
+
+/* Search layout: a sticky glass filter rail on the left, results on the right.
+   Collapses to a single stacked column once there's no room for a fixed rail. */
+.search-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  // Stretch (not `start`) so `.filter-rail` spans the full row height — the
+  // same height as the results column. A sticky element can only stay
+  // "frozen" while scrolling through its own box, so without this it would
+  // unstick almost immediately instead of riding down with the results and
+  // releasing near the bottom, which is the whole point of the rail.
+  align-items: stretch;
+  gap: 1.75rem;
+  margin: 1.25rem 0 2rem;
+
+  @include below($bp-sidebar) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Grid items default to a content-based minimum width, which can force the
+// track wider than its `1fr` share ("grid blowout"). Pin it to the track size.
+.filter-rail,
+.search-results {
+  min-width: 0;
+}
+
+.filter-sentinel {
+  height: 1px;
+  margin-top: -1px;
+  visibility: hidden;
+}
+
+/* Filter panel — chips + field filters as one glass rail.
+   Sticks below the header so filters stay reachable while scrolling. */
+.filter-panel {
+  position: sticky;
+  top: calc(var(--header-h) + 1rem);
+  z-index: 9;
+  padding: 1.4rem 1.25rem 1.3rem;
+  @include glass();
+  border: 1px solid rgba(255, 244, 230, 0.7);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  animation: fadeUp 0.6s var(--ease-out) 0.2s backwards;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  @include below($bp-sidebar) {
+    position: static;
+  }
+}
+
+/* Gold-shot accent ribbon, matching the detail page's side-card */
+.filter-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-luxe);
+}
+
+.filter-panel.is-stuck {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), var(--shadow-lg);
+  border-color: rgba(255, 255, 255, 0.75);
+}
+
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.filter-bar input,
+.filter-bar select {
+  @include field-input;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+  @include field-input-focus;
+}
+
+.filter-bar button {
+  width: 100%;
+}

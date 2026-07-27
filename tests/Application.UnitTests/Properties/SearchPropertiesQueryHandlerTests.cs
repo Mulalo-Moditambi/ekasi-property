@@ -138,6 +138,40 @@ public sealed class SearchPropertiesQueryHandlerTests : BaseHandlerTest
     }
 
     [Fact]
+    public async Task Handle_Should_SortByPrice()
+    {
+        // Arrange
+        await using TestDbContext context = CreateDbContext();
+        Property cheap = PropertyTestData.CreateProperty(Guid.NewGuid());
+        cheap.Price = 1000m;
+        Property mid = PropertyTestData.CreateProperty(Guid.NewGuid());
+        mid.Price = 2500m;
+        Property pricey = PropertyTestData.CreateProperty(Guid.NewGuid());
+        pricey.Price = 5000m;
+        context.Properties.AddRange(pricey, cheap, mid);
+        await context.SaveChangesAsync();
+
+        var handler = new SearchPropertiesQueryHandler(context);
+
+        // Act
+        Result<SearchPropertiesResponse> ascending = await handler.Handle(
+            new SearchPropertiesQuery(null, null, null, null, null, null, Sort: "price_asc"),
+            CancellationToken.None);
+        Result<SearchPropertiesResponse> descending = await handler.Handle(
+            new SearchPropertiesQuery(null, null, null, null, null, null, Sort: "price_desc"),
+            CancellationToken.None);
+
+        // Assert
+        ascending.Value.Items[0].Price.ShouldBe(1000m);
+        ascending.Value.Items[1].Price.ShouldBe(2500m);
+        ascending.Value.Items[2].Price.ShouldBe(5000m);
+
+        descending.Value.Items[0].Price.ShouldBe(5000m);
+        descending.Value.Items[1].Price.ShouldBe(2500m);
+        descending.Value.Items[2].Price.ShouldBe(1000m);
+    }
+
+    [Fact]
     public async Task Handle_Should_ClampInvalidPaging()
     {
         // Arrange

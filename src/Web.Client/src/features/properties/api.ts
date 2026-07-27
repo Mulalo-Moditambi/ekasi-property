@@ -1,16 +1,18 @@
-import { request } from './client';
+import { request } from '../../shared/api/client';
 import type {
   CreateListingRequest,
   PagedResult,
   PropertyDetail,
+  PropertySort,
   PropertySummary,
   SearchFilters,
-} from '../types/property';
+} from './types';
 
 export function searchProperties(
   filters: SearchFilters,
   page = 1,
   pageSize = 12,
+  sort: PropertySort = 'newest',
 ): Promise<PagedResult<PropertySummary>> {
   const params = new URLSearchParams();
 
@@ -20,6 +22,7 @@ export function searchProperties(
   if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
   if (filters.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
   if (filters.minBedrooms !== undefined) params.set('minBedrooms', String(filters.minBedrooms));
+  params.set('sort', sort);
   params.set('page', String(page));
   params.set('pageSize', String(pageSize));
 

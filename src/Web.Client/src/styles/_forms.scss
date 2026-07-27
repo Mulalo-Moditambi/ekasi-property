@@ -1,0 +1,106 @@
+@use 'mixins' as *;
+
+/* Forms */
+.stacked-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.stacked-form input,
+.stacked-form select,
+.stacked-form textarea {
+  @include field-input;
+}
+
+.stacked-form input:focus,
+.stacked-form select:focus,
+.stacked-form textarea:focus {
+  @include field-input-focus;
+}
+
+.stacked-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.stacked-form fieldset {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.stacked-form legend {
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  padding: 0 0.4rem;
+}
+
+.stacked-form .checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.stacked-form .checkbox input {
+  width: auto;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+
+  @include below($bp-mobile) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Photo previews (create listing) */
+.photo-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.photo-preview {
+  position: relative;
+  width: 90px;
+  height: 68px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-preview button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(31, 36, 48, 0.75);
+  font-size: 0.7rem;
+  line-height: 1;
+}

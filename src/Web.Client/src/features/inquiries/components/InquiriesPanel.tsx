@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getInquiries } from '../api/inquiries';
-import type { Inquiry } from '../types/inquiry';
+import { getInquiries } from '../api';
+import type { Inquiry } from '../types';
 
 export function InquiriesPanel({ propertyId }: { propertyId: string }) {
   const [inquiries, setInquiries] = useState<Inquiry[] | null>(null);
