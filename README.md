@@ -1,3 +1,9 @@
+[![Build](https://github.com/Mulalo-Moditambi/ekasi-property/actions/workflows/build.yml/badge.svg)](https://github.com/Mulalo-Moditambi/ekasi-property/actions/workflows/build.yml)
+
+[![CodeQL](https://github.com/Mulalo-Moditambi/ekasi-property/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/Mulalo-Moditambi/ekasi-property/actions/workflows/github-code-scanning/codeql)
+
+[![Dependabot Updates](https://github.com/Mulalo-Moditambi/ekasi-property/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/Mulalo-Moditambi/ekasi-property/actions/workflows/dependabot/dependabot-updates)
+
 # Ekasi Property
 
 A property marketplace for the township market — rent out backrooms and cottages,
