@@ -25,7 +25,10 @@ services:
     container_name: azurite
     # Bind to 0.0.0.0 so the emulator is reachable from the API container and the host
     # browser, which fetches the blob URLs the API hands out.
-    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data
+    # --skipApiVersionCheck: the Azure SDK negotiates a REST API version newer than any
+    # released Azurite recognises, and without it the emulator rejects every call with
+    # 400 InvalidHeaderValue. Azurite trails the SDK; nothing here is unusual.
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data --skipApiVersionCheck
     volumes:
       - ./.containers/azurite:/data
     ports:

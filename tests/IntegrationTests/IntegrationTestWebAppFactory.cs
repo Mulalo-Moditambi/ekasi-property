@@ -16,7 +16,16 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
 
     // The app has a single file-storage implementation, so image uploads run against a real
     // blob endpoint here rather than a substitute that could drift from it.
-    private readonly AzuriteContainer _blobContainer =         new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:latest").Build();
+    //
+    // --skipApiVersionCheck is required, not optional: the Azure SDK negotiates a REST API
+    // version newer than any released Azurite recognises, and without the flag the emulator
+    // rejects the very first call with 400 InvalidHeaderValue. Azurite is simply behind the
+    // SDK; the app is not doing anything unusual. Appended to the builder's own arguments
+    // rather than replacing them.
+    private readonly AzuriteContainer _blobContainer =
+        new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
+            .WithCommand("--skipApiVersionCheck")
+            .Build();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
