@@ -1,41 +1,28 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import type { ReactNode } from 'react';
-import { AuthProvider, useAuth } from './features/auth/AuthContext';
-import { Layout } from './shared/layout/Layout';
-import { CreateListingPage } from './pages/CreateListingPage';
-import { LoginPage } from './pages/LoginPage';
-import { PropertyDetailPage } from './pages/PropertyDetailPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { SearchPage } from './pages/SearchPage';
+import { useState } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from 'react-router-dom';
+import { AuthProvider } from './features/auth/AuthContext';
+import { ToastProvider } from './shared/components/Toast';
+import { createQueryClient } from './shared/api/queryClient';
+import { router } from './app/routes/router';
 
-function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
-
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
-}
-
+/**
+ * Providers only — the route table lives in `app/routes/router.tsx`.
+ *
+ * The query client is created in state rather than at module scope so it is
+ * never shared across React roots (tests, StrictMode's double-invoke) while
+ * still surviving every re-render of this component.
+ */
 export function App() {
+  const [queryClient] = useState(createQueryClient);
+
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<SearchPage />} />
-            <Route path="properties/:id" element={<PropertyDetailPage />} />
-            <Route
-              path="list-property"
-              element={
-                <RequireAuth>
-                  <CreateListingPage />
-                </RequireAuth>
-              }
-            />
-            <Route path="login" element={<LoginPage />} />
-            <Route path="register" element={<RegisterPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </ToastProvider>
+    </QueryClientProvider>
   );
 }

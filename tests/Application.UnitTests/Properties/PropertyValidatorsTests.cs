@@ -1,5 +1,7 @@
 using Application.Properties.AddImages;
 using Application.Properties.Create;
+using Application.Properties.DeleteImage;
+using Application.Properties.ReorderImages;
 using Application.Properties.Update;
 using Domain.Properties;
 using FluentValidation.TestHelper;
@@ -11,6 +13,8 @@ public sealed class PropertyValidatorsTests
     private readonly CreatePropertyCommandValidator _createValidator = new();
     private readonly UpdatePropertyCommandValidator _updateValidator = new();
     private readonly AddPropertyImagesCommandValidator _addImagesValidator = new();
+    private readonly DeletePropertyImageCommandValidator _deleteImageValidator = new();
+    private readonly ReorderPropertyImagesCommandValidator _reorderImagesValidator = new();
 
     private static CreatePropertyCommand ValidCreateCommand => new()
     {
@@ -198,5 +202,45 @@ public sealed class PropertyValidatorsTests
         TestValidationResult<AddPropertyImagesCommand> result = _addImagesValidator.TestValidate(command);
 
         result.Errors.ShouldNotBeEmpty();
+    }
+
+    [Fact]
+    public void DeleteImageValidator_Should_NotHaveErrors_WhenCommandIsValid()
+    {
+        var command = new DeletePropertyImageCommand(Guid.NewGuid(), Guid.NewGuid());
+
+        TestValidationResult<DeletePropertyImageCommand> result = _deleteImageValidator.TestValidate(command);
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact]
+    public void DeleteImageValidator_Should_HaveError_WhenImageIdIsEmpty()
+    {
+        var command = new DeletePropertyImageCommand(Guid.NewGuid(), Guid.Empty);
+
+        TestValidationResult<DeletePropertyImageCommand> result = _deleteImageValidator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(c => c.ImageId);
+    }
+
+    [Fact]
+    public void ReorderImagesValidator_Should_NotHaveErrors_WhenCommandIsValid()
+    {
+        var command = new ReorderPropertyImagesCommand { PropertyId = Guid.NewGuid(), ImageIds = [Guid.NewGuid()] };
+
+        TestValidationResult<ReorderPropertyImagesCommand> result = _reorderImagesValidator.TestValidate(command);
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact]
+    public void ReorderImagesValidator_Should_HaveError_WhenImageIdsIsEmpty()
+    {
+        var command = new ReorderPropertyImagesCommand { PropertyId = Guid.NewGuid(), ImageIds = [] };
+
+        TestValidationResult<ReorderPropertyImagesCommand> result = _reorderImagesValidator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(c => c.ImageIds);
     }
 }

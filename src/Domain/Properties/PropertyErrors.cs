@@ -31,4 +31,12 @@ public static class PropertyErrors
     public static Error TooManyImages(Guid propertyId, int maxImages) => Error.Problem(
         "Properties.TooManyImages",
         $"The property with the Id = '{propertyId}' cannot have more than {maxImages} images");
+
+    public static Error ImageNotFound(Guid propertyId, Guid imageId) => Error.NotFound(
+        "Properties.ImageNotFound",
+        $"The image with the Id = '{imageId}' was not found on property '{propertyId}'");
+
+    public static Error InvalidImageOrder(Guid propertyId) => Error.Problem(
+        "Properties.InvalidImageOrder",
+        $"The provided image order does not match the images on property '{propertyId}'");
 }

@@ -52,6 +52,26 @@ internal sealed class SearchPropertiesQueryHandler(
             properties = properties.Where(p => p.Bedrooms >= query.MinBedrooms.Value);
         }
 
+        if (query.HasElectricity.HasValue)
+        {
+            properties = properties.Where(p => p.HasElectricity == query.HasElectricity.Value);
+        }
+
+        if (query.WaterIncluded.HasValue)
+        {
+            properties = properties.Where(p => p.WaterIncluded == query.WaterIncluded.Value);
+        }
+
+        if (query.HasOwnEntrance.HasValue)
+        {
+            properties = properties.Where(p => p.HasOwnEntrance == query.HasOwnEntrance.Value);
+        }
+
+        if (query.HasParking.HasValue)
+        {
+            properties = properties.Where(p => p.HasParking == query.HasParking.Value);
+        }
+
         int totalCount = await properties.CountAsync(cancellationToken);
 
         IOrderedQueryable<Property> ordered = query.Sort switch

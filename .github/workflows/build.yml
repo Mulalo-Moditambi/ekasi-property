@@ -59,3 +59,40 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Builds the deployable container (API + compiled SPA) and pushes it to GitHub's
+  # registry, which Azure Container Apps pulls from. Gated behind both build jobs so a
+  # failing test can never publish an image.
+  publish-image:
+    needs: [build-backend, build-frontend]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          # Provided automatically by Actions — nothing to configure.
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/Web.Api/Dockerfile
+          push: true
+          # Owner is lower-cased by hand: container registries reject uppercase repository
+          # names, and the GitHub handle here contains capitals.
+          tags: |
+            ghcr.io/mulalo-moditambi/ekasi-api:latest
+            ghcr.io/mulalo-moditambi/ekasi-api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

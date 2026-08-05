@@ -22,6 +22,10 @@ internal sealed class Search : IEndpoint
             decimal? maxPrice,
             int? minBedrooms,
             string? sort,
+            bool? hasElectricity,
+            bool? waterIncluded,
+            bool? hasOwnEntrance,
+            bool? hasParking,
             int page = 1,
             int pageSize = 20) =>
         {
@@ -34,12 +38,17 @@ internal sealed class Search : IEndpoint
                 minBedrooms,
                 page,
                 pageSize,
-                sort);
+                sort,
+                hasElectricity,
+                waterIncluded,
+                hasOwnEntrance,
+                hasParking);
 
             Result<SearchPropertiesResponse> result = await handler.Handle(query, cancellationToken);
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
+        .RequireRateLimiting(RateLimitingPolicies.Read)
         .WithTags(Tags.Properties);
     }
 }

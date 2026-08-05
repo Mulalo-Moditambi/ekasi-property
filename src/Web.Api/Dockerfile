@@ -8,6 +8,21 @@ EXPOSE 8080
 EXPOSE 8081
 
 
+# Builds the React SPA. Its output is copied into the API's wwwroot in the final stage so
+# both are served from one origin — which is what lets the SameSite=Strict refresh cookie
+# work without a CORS allowlist.
+FROM node:20-alpine AS client
+WORKDIR /client
+# Copy the lockfile first so this layer is only rebuilt when dependencies actually change,
+# not on every source edit.
+COPY ["src/Web.Client/package.json", "src/Web.Client/package-lock.json", "./"]
+# `npm ci` over `npm install`: installs exactly the locked versions and fails if the
+# lockfile is out of sync, so a container build can never silently resolve a new version.
+RUN npm ci
+COPY ["src/Web.Client/", "./"]
+RUN npm run build
+
+
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -33,4 +48,6 @@ RUN dotnet publish "./Web.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# The SPA lands in wwwroot, where UseStaticFiles and MapFallbackToFile pick it up.
+COPY --from=client /client/dist ./wwwroot
 ENTRYPOINT ["dotnet", "Web.Api.dll"]

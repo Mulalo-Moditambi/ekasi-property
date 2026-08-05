@@ -32,6 +32,7 @@ internal sealed class SubmitInquiry : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
+        .RequireRateLimiting(RateLimitingPolicies.PublicWrite)
         .WithTags(Tags.Properties);
     }
 }

@@ -399,5 +399,6 @@ FodyWeavers.xsd
 
 .containers/
 
-# Uploaded listing images (dev)
-wwwroot/uploads/
+# Build artifacts / stray package managers
+*.tsbuildinfo
+pnpm-lock.yaml

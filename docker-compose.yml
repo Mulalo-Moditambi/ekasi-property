@@ -20,6 +20,17 @@ services:
     ports:
       - 1433:1433
 
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: azurite
+    # Bind to 0.0.0.0 so the emulator is reachable from the API container and the host
+    # browser, which fetches the blob URLs the API hands out.
+    command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --location /data
+    volumes:
+      - ./.containers/azurite:/data
+    ports:
+      - 10000:10000
+
   seq:
     image: datalust/seq:2024.3
     container_name: seq

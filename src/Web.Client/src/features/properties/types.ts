@@ -39,6 +39,15 @@ export const propertyStatusLabels: Record<PropertyStatus, string> = {
   [PropertyStatus.Withdrawn]: 'Withdrawn',
 };
 
+export type StatusTone = 'listed' | 'rented' | 'sold' | 'withdrawn';
+
+export const propertyStatusTones: Record<PropertyStatus, StatusTone> = {
+  [PropertyStatus.Listed]: 'listed',
+  [PropertyStatus.Rented]: 'rented',
+  [PropertyStatus.Sold]: 'sold',
+  [PropertyStatus.Withdrawn]: 'withdrawn',
+};
+
 export interface PropertyImage {
   id: string;
   url: string;
@@ -80,6 +89,32 @@ export interface SearchFilters {
   minPrice?: number;
   maxPrice?: number;
   minBedrooms?: number;
+  hasElectricity?: boolean;
+  waterIncluded?: boolean;
+  hasOwnEntrance?: boolean;
+  hasParking?: boolean;
+}
+
+export interface MyProperty {
+  id: string;
+  title: string;
+  listingType: ListingType;
+  propertyType: PropertyType;
+  status: PropertyStatus;
+  price: number;
+  township: string;
+  city: string;
+  province: string;
+  bedrooms: number;
+  bathrooms: number;
+  createdAt: string;
+  updatedAt: string | null;
+  coverImageUrl: string | null;
+}
+
+export interface MyPropertiesFilters {
+  status?: PropertyStatus;
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'status';
 }
 
 export type PropertySort = 'newest' | 'price_asc' | 'price_desc';

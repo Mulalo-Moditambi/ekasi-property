@@ -1,222 +1,238 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  deleteListing,
-  getProperty,
-  markRented,
-  markSold,
-  relistProperty,
-  uploadImages,
-  withdrawListing,
-} from '../features/properties/api';
+import { Suspense, lazy, useState } from 'react';
+import { Link, Outlet, useParams } from 'react-router-dom';
+import { ChevronRight, Heart, MapPin, Share2 } from 'lucide-react';
+import { paths } from '../app/routes/paths';
+import { NotFoundPage } from '../app/routes/StatusPage';
 import { useAuth } from '../features/auth/AuthContext';
-import { Breadcrumbs } from '../shared/components/Breadcrumbs';
-import { ContactOwnerForm } from '../features/inquiries/components/ContactOwnerForm';
-import { InquiriesPanel } from '../features/inquiries/components/InquiriesPanel';
-import { PropertyGallery } from '../features/properties/components/PropertyGallery';
-import type { PropertyDetail } from '../features/properties/types';
-import {
-  ListingType,
-  PropertyStatus,
-  formatPrice,
-  listingTypeLabels,
-  propertyStatusLabels,
-  propertyTypeLabels,
-} from '../features/properties/types';
+import { DetailSkeleton } from '../features/properties/components/detail/DetailSkeleton';
+import { DetailTabs } from '../features/properties/components/detail/DetailTabs';
+import { OwnerPanel } from '../features/properties/components/detail/OwnerPanel';
+import type { PropertyDetailContext } from '../features/properties/components/detail/context';
+import { useProperty } from '../features/properties/queries';
+import { useFavorite } from '../features/properties/useFavorite';
+import { ApiError } from '../shared/api/client';
+import { errorMessage } from '../shared/api/queryClient';
+import { useToast } from '../shared/components/Toast';
+import { priceParts, relativeTime } from '../shared/format';
+import { Badge } from '../shared/ui/badge';
+import { Button } from '../shared/ui/button';
+import { Notice } from '../shared/ui/form';
+import { Skeleton } from '../shared/ui/skeleton';
+import { cn } from '../shared/ui/utils';
+import { PropertyStatus, listingTypeLabels, propertyStatusLabels, propertyTypeLabels } from '../features/properties/types';
 
+/**
+ * The gallery pulls in the Radix dialog for its lightbox, which no other public
+ * page needs. Splitting it out keeps that weight off the first paint of the
+ * page a shared listing link lands on.
+ */
+const PropertyGallery = lazy(() =>
+  import('../features/properties/components/PropertyGallery').then((module) => ({
+    default: module.PropertyGallery,
+  })),
+);
+
+/**
+ * The contact form drags in react-hook-form and zod, and the inquiries panel is
+ * owner-only. Neither belongs in the bundle a first-time visitor downloads to
+ * read a listing, so both load on demand.
+ */
+const ContactOwnerForm = lazy(() =>
+  import('../features/inquiries/components/ContactOwnerForm').then((module) => ({
+    default: module.ContactOwnerForm,
+  })),
+);
+
+const InquiriesPanel = lazy(() =>
+  import('../features/inquiries/components/InquiriesPanel').then((module) => ({
+    default: module.InquiriesPanel,
+  })),
+);
+
+const STATUS_TONE = {
+  [PropertyStatus.Listed]: 'cta',
+  [PropertyStatus.Rented]: 'info',
+  [PropertyStatus.Sold]: 'violet',
+  [PropertyStatus.Withdrawn]: 'neutral',
+} as const;
+
+/**
+ * Container for the listing: it owns the fetch and the page chrome, and hands a
+ * guaranteed-present property to the tab routes through the outlet context.
+ */
 export function PropertyDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { propertyId } = useParams<{ propertyId: string }>();
   const { userId } = useAuth();
+  const { notify } = useToast();
+  const { data: property, isPending, error } = useProperty(propertyId);
+  const { saved, toggle } = useFavorite(propertyId ?? '');
+  const [shareBusy, setShareBusy] = useState(false);
 
-  const [property, setProperty] = useState<PropertyDetail | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-
-  const load = useCallback(async () => {
-    if (!id) return;
-
-    try {
-      setProperty(await getProperty(id));
-      setError(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load the listing');
-    }
-  }, [id]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function runAction(action: (propertyId: string) => Promise<void>, refresh = true) {
-    if (!id) return;
-    setBusy(true);
-    setError(null);
-
-    try {
-      await action(id);
-      if (refresh) {
-        await load();
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Action failed');
-    } finally {
-      setBusy(false);
-    }
+  if (isPending) {
+    return <DetailSkeleton />;
   }
 
-  async function handlePhotosSelected(event: ChangeEvent<HTMLInputElement>) {
-    if (!id) return;
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = '';
-    if (files.length === 0) return;
-
-    setBusy(true);
-    setError(null);
-
-    try {
-      await uploadImages(id, files);
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not upload the photos');
-    } finally {
-      setBusy(false);
-    }
+  // A deleted or mistyped listing is a missing page, not a broken one.
+  if (error instanceof ApiError && error.status === 404) {
+    return <NotFoundPage />;
   }
 
-  async function handleDelete() {
-    if (!window.confirm('Delete this listing permanently?')) return;
-
-    await runAction(deleteListing, false);
-    navigate('/');
-  }
-
-  if (error && !property) {
+  if (error || !property) {
     return (
-      <div className="page">
-        <p className="error">{error}</p>
-      </div>
-    );
-  }
-
-  if (!property) {
-    return (
-      <div className="page">
-        <p className="muted">Loading listing…</p>
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <Notice>{errorMessage(error, 'Could not load the listing')}</Notice>
       </div>
     );
   }
 
   const isOwner = userId !== null && userId === property.ownerId;
   const isListed = property.status === PropertyStatus.Listed;
+  const { amount, period } = priceParts(property.price, property.listingType);
+  const outletContext: PropertyDetailContext = { property, isOwner };
+
+  const shareTitle = property.title;
+
+  async function handleShare() {
+    const url = window.location.href;
+    setShareBusy(true);
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: shareTitle, url });
+        return;
+      }
+
+      await navigator.clipboard.writeText(url);
+      notify('Link copied to clipboard');
+    } catch {
+      // A cancelled share sheet and a blocked clipboard both land here; neither
+      // is worth interrupting the user over.
+    } finally {
+      setShareBusy(false);
+    }
+  }
 
   return (
-    <div className="page detail">
-      <Breadcrumbs
-        items={[
-          { label: 'Home', to: '/' },
-          { label: property.township },
-          { label: property.title },
-        ]}
-      />
+    // The extra bottom padding on mobile clears the sticky contact bar.
+    <div className="mx-auto max-w-[1400px] px-4 pb-24 pt-5 sm:px-6 lg:pb-16">
+      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-sm text-ink-3">
+        <Link
+          to={paths.properties.root}
+          className="rounded transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-cta"
+        >
+          Browse
+        </Link>
+        <ChevronRight className="size-3.5" />
+        <span>{property.township}</span>
+        <ChevronRight className="size-3.5" />
+        <span className="truncate text-ink-2">{property.title}</span>
+      </nav>
 
-      <header className="detail-header">
-        <h1>{property.title}</h1>
-        <p className="location">
-          {property.street}, {property.township}, {property.city}, {property.province}, {property.postalCode}
-        </p>
-        <p className="price">{formatPrice(property.price, property.listingType)}</p>
-      </header>
+      <Suspense fallback={<Skeleton className="aspect-[4/3] w-full rounded-2xl sm:aspect-auto sm:h-[26rem]" />}>
+        <PropertyGallery urls={property.images.map((image) => image.url)} alt={property.title} />
+      </Suspense>
 
-      <div className="detail-layout">
-        <div className="detail-main">
-          <PropertyGallery urls={property.images.map((image) => image.url)} alt={property.title} />
+      <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-8">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                <Badge tone="solid">{listingTypeLabels[property.listingType]}</Badge>
+                <Badge>{propertyTypeLabels[property.propertyType]}</Badge>
+                <Badge tone={STATUS_TONE[property.status]}>
+                  {propertyStatusLabels[property.status]}
+                </Badge>
+              </div>
 
-          <div className="card-badges detail-tags">
-            <span className="badge badge-listing">{listingTypeLabels[property.listingType]}</span>
-            <span className="badge badge-type">{propertyTypeLabels[property.propertyType]}</span>
-            <span className={`badge status-${property.status}`}>{propertyStatusLabels[property.status]}</span>
+              <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                {property.title}
+              </h1>
+
+              <p className="mt-2 flex items-start gap-1.5 text-sm text-ink-2">
+                <MapPin className="mt-0.5 size-4 shrink-0 text-ink-3" />
+                {property.township}, {property.city}, {property.province}
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-pressed={saved}
+                aria-label={saved ? 'Remove from saved listings' : 'Save this listing'}
+                onClick={toggle}
+                className={cn(saved && 'border-danger/30 text-danger')}
+              >
+                <Heart className={cn(saved && 'fill-current')} />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Share this listing"
+                disabled={shareBusy}
+                onClick={handleShare}
+              >
+                <Share2 />
+              </Button>
+            </div>
           </div>
 
-          <ul className="features">
-            <li>{property.bedrooms} bedroom{property.bedrooms === 1 ? '' : 's'}</li>
-            <li>{property.bathrooms} bathroom{property.bathrooms === 1 ? '' : 's'}</li>
-            {property.hasElectricity && <li>Electricity</li>}
-            {property.waterIncluded && <li>Water included</li>}
-            {property.hasOwnEntrance && <li>Own entrance</li>}
-            {property.hasParking && <li>Parking</li>}
-          </ul>
+          <div className="mt-5 flex flex-wrap items-baseline gap-2 border-y border-line py-4">
+            <p className="tnum text-3xl font-bold tracking-tight text-ink">{amount}</p>
+            {period && <span className="text-sm text-ink-3">{period}</span>}
+            <span className="ml-auto text-xs text-ink-3">
+              Listed {relativeTime(property.createdAt)}
+            </span>
+          </div>
 
-          <section className="description">
-            <h2>About this property</h2>
-            <p>{property.description}</p>
-          </section>
+          <DetailTabs propertyId={property.id} />
+          <Outlet context={outletContext} />
 
-          {isOwner && <InquiriesPanel propertyId={property.id} />}
+          {isOwner && (
+            <div className="mt-8">
+              <Suspense fallback={<Skeleton className="h-48 rounded-2xl" />}>
+                <InquiriesPanel propertyId={property.id} />
+              </Suspense>
+            </div>
+          )}
         </div>
 
-        <aside className="detail-side">
-          <div className="side-card">
-            {!isOwner && isListed && <ContactOwnerForm propertyId={property.id} />}
-
-            {!isOwner && !isListed && (
-              <p className="muted">
-                This property is currently {propertyStatusLabels[property.status].toLowerCase()} and not taking
-                inquiries.
-              </p>
-            )}
-
-            {isOwner && (
-              <section className="owner-actions">
-                <h2>Manage your listing</h2>
-                {error && <p className="error">{error}</p>}
-                <div className="actions">
-                  {isListed && property.listingType === ListingType.Rent && (
-                    <button type="button" disabled={busy} onClick={() => runAction(markRented)}>
-                      Mark as rented
-                    </button>
-                  )}
-                  {isListed && property.listingType === ListingType.Sale && (
-                    <button type="button" disabled={busy} onClick={() => runAction(markSold)}>
-                      Mark as sold
-                    </button>
-                  )}
-                  {isListed && (
-                    <button type="button" disabled={busy} onClick={() => runAction(withdrawListing)}>
-                      Withdraw
-                    </button>
-                  )}
-                  {(property.status === PropertyStatus.Rented || property.status === PropertyStatus.Withdrawn) && (
-                    <button type="button" disabled={busy} onClick={() => runAction(relistProperty)}>
-                      Relist
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    disabled={busy || property.images.length >= 10}
-                    onClick={() => photoInputRef.current?.click()}
-                  >
-                    Add photos ({property.images.length}/10)
-                  </button>
-                  <input
-                    ref={photoInputRef}
-                    type="file"
-                    multiple
-                    accept="image/jpeg,image/png,image/webp"
-                    hidden
-                    onChange={handlePhotosSelected}
-                  />
-                  <button type="button" className="danger" disabled={busy} onClick={handleDelete}>
-                    Delete listing
-                  </button>
-                </div>
-              </section>
-            )}
+        {/* Sticky contact/manage panel, locked to the viewport on desktop. */}
+        <aside id="contact-panel" className="mt-8 scroll-mt-20 lg:mt-0">
+          <div className="lg:sticky lg:top-20">
+            <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
+              {isOwner && <OwnerPanel property={property} />}
+              {!isOwner && isListed && (
+                <Suspense fallback={<Skeleton className="h-80 rounded-xl" />}>
+                  <ContactOwnerForm propertyId={property.id} />
+                </Suspense>
+              )}
+              {!isOwner && !isListed && (
+                <p className="text-sm text-ink-2">
+                  This property is currently{' '}
+                  {propertyStatusLabels[property.status].toLowerCase()} and not taking inquiries.
+                </p>
+              )}
+            </div>
           </div>
         </aside>
       </div>
+
+      {/* Mobile: the contact action follows the reader down the page. */}
+      {!isOwner && isListed && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 p-3 backdrop-blur-md lg:hidden">
+          <Button
+            variant="cta"
+            size="lg"
+            className="w-full"
+            onClick={() =>
+              document.getElementById('contact-panel')?.scrollIntoView({ behavior: 'smooth' })
+            }
+          >
+            Contact the owner
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

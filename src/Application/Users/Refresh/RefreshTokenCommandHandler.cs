@@ -26,13 +26,15 @@ internal sealed class RefreshTokenCommandHandler(
         string accessToken = tokenProvider.Create(refreshToken.User);
         string newRefreshToken = tokenProvider.GenerateRefreshToken();
 
+        DateTime expiresOnUtc = dateTimeProvider.UtcNow.AddDays(RefreshTokenExpirationInDays);
+
         // Rotate the refresh token so a stolen token can only be used once.
         refreshToken.Token = newRefreshToken;
-        refreshToken.ExpiresOnUtc = dateTimeProvider.UtcNow.AddDays(RefreshTokenExpirationInDays);
+        refreshToken.ExpiresOnUtc = expiresOnUtc;
 
         await context.SaveChangesAsync(cancellationToken);
 
-        return new AccessTokensResponse(accessToken, newRefreshToken);
+        return new AccessTokensResponse(accessToken, newRefreshToken, expiresOnUtc);
     }
 
     private const int RefreshTokenExpirationInDays = 7;

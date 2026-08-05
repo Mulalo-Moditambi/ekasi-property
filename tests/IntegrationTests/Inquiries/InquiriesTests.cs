@@ -106,4 +106,87 @@ public sealed class InquiriesTests(IntegrationTestWebAppFactory factory) : BaseI
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    private sealed record LeadDto(Guid Id, Guid PropertyId, string PropertyTitle, string Name);
+
+    private sealed record LeadsPagedResultDto(List<LeadDto> Items, int TotalCount);
+
+    [Fact]
+    public async Task GetMyLeads_Should_ReturnUnauthorized_WhenTokenIsMissing()
+    {
+        // Act
+        HttpResponseMessage response = await HttpClient.GetAsync("inquiries/mine");
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetMyLeads_Should_AggregateInquiriesAcrossAllOfTheOwnersProperties()
+    {
+        // Arrange: owner creates two listings.
+        (Guid ownerId, AccessTokens ownerTokens) = await RegisterAndLoginAsync();
+        Authenticate(ownerTokens.AccessToken);
+
+        HttpResponseMessage firstCreate = await HttpClient.PostAsJsonAsync("properties", CreateListingRequest(ownerId));
+        firstCreate.EnsureSuccessStatusCode();
+        Guid firstPropertyId = await firstCreate.Content.ReadFromJsonAsync<Guid>();
+
+        HttpResponseMessage secondCreate = await HttpClient.PostAsJsonAsync("properties", CreateListingRequest(ownerId));
+        secondCreate.EnsureSuccessStatusCode();
+        Guid secondPropertyId = await secondCreate.Content.ReadFromJsonAsync<Guid>();
+
+        // A different owner's listing should never appear in these leads.
+        (Guid otherOwnerId, AccessTokens otherTokens) = await RegisterAndLoginAsync();
+        Authenticate(otherTokens.AccessToken);
+        HttpResponseMessage otherCreate = await HttpClient.PostAsJsonAsync("properties", CreateListingRequest(otherOwnerId));
+        otherCreate.EnsureSuccessStatusCode();
+        Guid otherPropertyId = await otherCreate.Content.ReadFromJsonAsync<Guid>();
+
+        // Act: visitors inquire on all three listings.
+        HttpClient.DefaultRequestHeaders.Authorization = null;
+        (await HttpClient.PostAsJsonAsync($"properties/{firstPropertyId}/inquiries", InquiryRequest())).EnsureSuccessStatusCode();
+        (await HttpClient.PostAsJsonAsync($"properties/{secondPropertyId}/inquiries", InquiryRequest())).EnsureSuccessStatusCode();
+        (await HttpClient.PostAsJsonAsync($"properties/{otherPropertyId}/inquiries", InquiryRequest())).EnsureSuccessStatusCode();
+
+        Authenticate(ownerTokens.AccessToken);
+        HttpResponseMessage response = await HttpClient.GetAsync("inquiries/mine");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        LeadsPagedResultDto? leads = await response.Content.ReadFromJsonAsync<LeadsPagedResultDto>();
+        leads!.Items.ShouldContain(l => l.PropertyId == firstPropertyId);
+        leads.Items.ShouldContain(l => l.PropertyId == secondPropertyId);
+        leads.Items.ShouldNotContain(l => l.PropertyId == otherPropertyId);
+    }
+
+    [Fact]
+    public async Task GetMyLeads_Should_FilterByPropertyId()
+    {
+        // Arrange
+        (Guid ownerId, AccessTokens ownerTokens) = await RegisterAndLoginAsync();
+        Authenticate(ownerTokens.AccessToken);
+
+        HttpResponseMessage firstCreate = await HttpClient.PostAsJsonAsync("properties", CreateListingRequest(ownerId));
+        firstCreate.EnsureSuccessStatusCode();
+        Guid firstPropertyId = await firstCreate.Content.ReadFromJsonAsync<Guid>();
+
+        HttpResponseMessage secondCreate = await HttpClient.PostAsJsonAsync("properties", CreateListingRequest(ownerId));
+        secondCreate.EnsureSuccessStatusCode();
+        Guid secondPropertyId = await secondCreate.Content.ReadFromJsonAsync<Guid>();
+
+        HttpClient.DefaultRequestHeaders.Authorization = null;
+        (await HttpClient.PostAsJsonAsync($"properties/{firstPropertyId}/inquiries", InquiryRequest())).EnsureSuccessStatusCode();
+        (await HttpClient.PostAsJsonAsync($"properties/{secondPropertyId}/inquiries", InquiryRequest())).EnsureSuccessStatusCode();
+
+        // Act
+        Authenticate(ownerTokens.AccessToken);
+        HttpResponseMessage response = await HttpClient.GetAsync($"inquiries/mine?propertyId={firstPropertyId}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        LeadsPagedResultDto? leads = await response.Content.ReadFromJsonAsync<LeadsPagedResultDto>();
+        leads!.Items.ShouldAllBe(l => l.PropertyId == firstPropertyId);
+        leads.Items.ShouldNotBeEmpty();
+    }
 }

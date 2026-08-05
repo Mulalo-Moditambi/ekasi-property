@@ -34,7 +34,7 @@ account (`Inquiry`), and owners see their inquiries per listing.
 ## Getting started
 
 ```bash
-docker compose up -d              # SQL Server + Seq
+docker compose up -d              # SQL Server + Seq + Azurite (listing images)
 dotnet run --project src/Web.Api  # API + Swagger on http://localhost:5000
 
 cd src/Web.Client
@@ -42,8 +42,11 @@ npm install
 npm run dev                       # frontend on http://localhost:5173 (proxies /api to the API)
 ```
 
-Run the test suite (the integration tests spin up a throwaway SQL Server container, so
-Docker must be running):
+Uploaded listing images always go to blob storage — Azurite locally, Azure Blob Storage in
+Azure — so there is no local-disk code path that only ever runs on a developer machine.
+
+Run the test suite (the integration tests spin up throwaway SQL Server and Azurite
+containers, so Docker must be running):
 
 ```bash
 dotnet test ekasi-property.slnx

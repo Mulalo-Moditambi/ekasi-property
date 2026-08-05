@@ -30,6 +30,7 @@ internal sealed class AddImages : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
+        .RequireRateLimiting(RateLimitingPolicies.Write)
         .WithTags(Tags.Properties)
         .RequireAuthorization()
         .DisableAntiforgery();

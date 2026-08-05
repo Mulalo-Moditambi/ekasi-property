@@ -1,6 +1,8 @@
 import { request } from '../../shared/api/client';
 import type {
   CreateListingRequest,
+  MyProperty,
+  MyPropertiesFilters,
   PagedResult,
   PropertyDetail,
   PropertySort,
@@ -22,11 +24,41 @@ export function searchProperties(
   if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
   if (filters.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
   if (filters.minBedrooms !== undefined) params.set('minBedrooms', String(filters.minBedrooms));
+  if (filters.hasElectricity !== undefined) params.set('hasElectricity', String(filters.hasElectricity));
+  if (filters.waterIncluded !== undefined) params.set('waterIncluded', String(filters.waterIncluded));
+  if (filters.hasOwnEntrance !== undefined) params.set('hasOwnEntrance', String(filters.hasOwnEntrance));
+  if (filters.hasParking !== undefined) params.set('hasParking', String(filters.hasParking));
   params.set('sort', sort);
   params.set('page', String(page));
   params.set('pageSize', String(pageSize));
 
   return request<PagedResult<PropertySummary>>(`/properties?${params.toString()}`);
+}
+
+export function getMyProperties(
+  filters: MyPropertiesFilters,
+  page = 1,
+  pageSize = 20,
+): Promise<PagedResult<MyProperty>> {
+  const params = new URLSearchParams();
+
+  if (filters.status !== undefined) params.set('status', String(filters.status));
+  if (filters.sort) params.set('sort', filters.sort);
+  params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+
+  return request<PagedResult<MyProperty>>(`/properties/mine?${params.toString()}`);
+}
+
+export function deleteImage(propertyId: string, imageId: string): Promise<void> {
+  return request<void>(`/properties/${propertyId}/images/${imageId}`, { method: 'DELETE' });
+}
+
+export function reorderImages(propertyId: string, imageIds: string[]): Promise<void> {
+  return request<void>(`/properties/${propertyId}/images/order`, {
+    method: 'PUT',
+    body: JSON.stringify({ imageIds }),
+  });
 }
 
 export function getProperty(id: string): Promise<PropertyDetail> {

@@ -62,6 +62,7 @@ internal sealed class Create : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
+        .RequireRateLimiting(RateLimitingPolicies.Write)
         .WithTags(Tags.Properties)
         .RequireAuthorization();
     }

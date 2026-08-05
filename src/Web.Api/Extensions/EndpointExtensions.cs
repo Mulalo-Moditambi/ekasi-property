@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Web.Api.Endpoints;
+using Web.Api.Infrastructure;
 
 namespace Web.Api.Extensions;
 
@@ -36,8 +37,10 @@ public static class EndpointExtensions
         return app;
     }
 
-    public static RouteHandlerBuilder HasPermission(this RouteHandlerBuilder app, string permission)
-    {
-        return app.RequireAuthorization(permission);
-    }
+    /// <summary>
+    /// Requires a valid CSRF token. Use on endpoints authenticated by cookie; Bearer
+    /// endpoints do not need it.
+    /// </summary>
+    public static RouteHandlerBuilder RequireAntiforgery(this RouteHandlerBuilder builder) =>
+        builder.AddEndpointFilter<AntiforgeryEndpointFilter>();
 }

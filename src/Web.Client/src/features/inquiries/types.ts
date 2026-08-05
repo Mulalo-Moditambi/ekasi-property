@@ -14,3 +14,13 @@ export interface SubmitInquiryRequest {
   phone?: string;
   message: string;
 }
+
+export interface Lead extends Inquiry {
+  propertyTitle: string;
+  propertyTownship: string;
+}
+
+export interface LeadsFilters {
+  propertyId?: string;
+  search?: string;
+}

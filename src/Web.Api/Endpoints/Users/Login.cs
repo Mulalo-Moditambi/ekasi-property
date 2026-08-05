@@ -16,15 +16,39 @@ internal sealed class Login : IEndpoint
         app.MapPost("users/login", async (
             Request request,
             ICommandHandler<LoginUserCommand, AccessTokensResponse> handler,
+            HttpContext httpContext,
+            IConfiguration configuration,
             CancellationToken cancellationToken) =>
         {
             var command = new LoginUserCommand(request.Email, request.Password);
 
             Result<AccessTokensResponse> result = await handler.Handle(command, cancellationToken);
 
-            return result.Match(Results.Ok, CustomResults.Problem);
+            return result.Match(
+                tokens => IssueTokens(httpContext, configuration, tokens),
+                CustomResults.Problem);
         })
         .WithTags(Tags.Users)
         .RequireRateLimiting(RateLimitingPolicies.Authentication);
     }
+
+    /// <summary>
+    /// Moves the refresh token into an httpOnly cookie and returns only the access token,
+    /// so the long-lived credential is never readable from script.
+    /// </summary>
+    internal static IResult IssueTokens(
+        HttpContext httpContext,
+        IConfiguration configuration,
+        AccessTokensResponse tokens)
+    {
+        RefreshTokenCookie.Append(
+            httpContext.Response,
+            configuration,
+            tokens.RefreshToken,
+            tokens.RefreshTokenExpiresOnUtc);
+
+        return Results.Ok(new AccessTokenResponse(tokens.AccessToken));
+    }
+
+    internal sealed record AccessTokenResponse(string AccessToken);
 }

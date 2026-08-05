@@ -21,6 +21,7 @@ internal sealed class MarkRented : IEndpoint
 
             return result.Match(Results.NoContent, CustomResults.Problem);
         })
+        .RequireRateLimiting(RateLimitingPolicies.Write)
         .WithTags(Tags.Properties)
         .RequireAuthorization();
     }

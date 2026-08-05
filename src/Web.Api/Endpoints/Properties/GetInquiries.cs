@@ -21,6 +21,7 @@ internal sealed class GetInquiries : IEndpoint
 
             return result.Match(Results.Ok, CustomResults.Problem);
         })
+        .RequireRateLimiting(RateLimitingPolicies.Read)
         .WithTags(Tags.Properties)
         .RequireAuthorization();
     }

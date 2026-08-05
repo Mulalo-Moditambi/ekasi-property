@@ -1,0 +1,257 @@
+@import 'tailwindcss';
+
+/*
+ * Dark mode is class-driven rather than media-driven so the header toggle can
+ * override the OS preference; AppShell seeds the class from `prefers-color-scheme`
+ * on first visit and from localStorage after that.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Semantic tokens only — nothing in the app reaches for a raw palette step.
+ * The scale is deliberately narrow: one surface ramp, one ink ramp, one brand.
+ * A dense reading UI earns its hierarchy from spacing and weight, so colour is
+ * kept scarce enough that the brand still means "act here".
+ */
+:root {
+  /* Warm neutrals. Gold sitting on cool blue-grey reads cheap; on a warm ramp it
+     reads like paper and brass, which is where the premium feel comes from. */
+  /* Dominant neutrals — ~80% of the surface area. Cool slate ramp. */
+  --c-canvas: #fafafc;
+  --c-surface: #ffffff;
+  --c-surface-2: #f8fafc;
+  --c-surface-3: #f1f5f9;
+  --c-line: #e2e8f0;
+  --c-line-strong: #cbd5e1;
+
+  --c-ink: #0f172a;
+  --c-ink-2: #475569;
+  --c-ink-3: #64748b;
+
+  /* Primary accent — ~15%. Midnight navy for headers, nav and branding. */
+  --c-brand: #0f1e36;
+  --c-brand-bright: #1e293b;
+  --c-brand-hover: #16233d;
+  --c-brand-fg: #ffffff;
+  --c-brand-soft: #eef2f7;
+  --c-brand-line: #cbd5e1;
+
+  /* Large brand panels (hero, auth aside). Separate from --c-brand because those
+     panels always carry white copy, whereas --c-brand inverts in dark mode. */
+  --c-hero: #0f1e36;
+  --c-hero-line: #1b2c49;
+  /* Diagonal navy→indigo base with a low sheen off the top-left. Two stops of the
+     same hue family, so it reads as depth rather than as a second colour. */
+  --c-hero-gradient:
+    radial-gradient(70rem 34rem at 12% -10%, rgba(148, 190, 255, 0.18), transparent 62%),
+    radial-gradient(46rem 28rem at 88% 12%, rgba(16, 185, 129, 0.14), transparent 66%),
+    linear-gradient(135deg, #142744 0%, #0f1e36 46%, #0b1526 100%);
+
+  /* Conversion accent — ~5%, high-intent CTAs and "active/verified" status only.
+     The brief specifies emerald #059669, but white on it measures 3.77:1, under
+     the 4.5 needed at button-label sizes. Filled CTAs therefore use emerald-700,
+     which is the same family at 5.55:1. #059669 is kept for large fills/icons
+     where 3:1 is sufficient. */
+  --c-cta: #047857;
+  --c-cta-hover: #036349;
+  --c-cta-fg: #ffffff;
+  --c-cta-soft: #ecfdf5;
+  --c-cta-line: #a7f3d0;
+
+  --c-danger: #be123c;
+  --c-danger-soft: #fff1f2;
+  --c-ok: #047857;
+  --c-ok-soft: #ecfdf5;
+  --c-warn: #b45309;
+  --c-warn-soft: #fffbeb;
+  --c-info: #1d4ed8;
+  --c-info-soft: #eff6ff;
+  --c-violet: #6d28d9;
+  --c-violet-soft: #f5f3ff;
+
+  --shadow-row: 0 1px 2px rgb(40 32 20 / 0.05);
+  --shadow-pop: 0 10px 30px -12px rgb(40 32 20 / 0.24), 0 2px 6px rgb(40 32 20 / 0.07);
+}
+
+.dark {
+  /* Dark keeps the same slate hue family, dropped to a midnight range. */
+  --c-canvas: #0b1220;
+  --c-surface: #111a2c;
+  --c-surface-2: #162034;
+  --c-surface-3: #1e293b;
+  --c-line: #24304a;
+  --c-line-strong: #37455f;
+
+  --c-ink: #e8edf5;
+  --c-ink-2: #a7b4c8;
+  --c-ink-3: #8494ab;
+
+  /* Brand inverts in dark: it is a light tint used both as text on soft panels and
+     as a solid fill, so the fill's label has to be ink, not white. Hover goes
+     brighter rather than darker, mirroring how light mode deepens on hover. */
+  --c-brand: #c7d5ea;
+  --c-brand-bright: #dbe6f7;
+  --c-brand-hover: #e3ecf9;
+  --c-brand-fg: #0f1a2e;
+  --c-brand-soft: #172033;
+  --c-brand-line: #2f3d55;
+
+  /* A notch above the midnight canvas rather than the light-mode navy: on a dark
+     page the panel should read as a raised slab, not a hole punched in the page. */
+  --c-hero: #141f39;
+  --c-hero-line: #24304a;
+  /* Same construction, pitched darker and with the sheen dialled back — on a
+     midnight canvas the light mode's highlight would blow out. */
+  --c-hero-gradient:
+    radial-gradient(70rem 34rem at 12% -10%, rgba(125, 170, 245, 0.14), transparent 62%),
+    radial-gradient(46rem 28rem at 88% 12%, rgba(16, 185, 129, 0.1), transparent 66%),
+    linear-gradient(135deg, #1a2745 0%, #131e36 48%, #0c1424 100%);
+
+  /* On a midnight canvas emerald-700 goes muddy, so dark flips to emerald-500
+     carrying an ink label — 6.6:1, and it reads as the same accent. */
+  --c-cta: #10b981;
+  --c-cta-hover: #34d399;
+  --c-cta-fg: #04231a;
+  --c-cta-soft: #06281f;
+  --c-cta-line: #10513c;
+
+  --c-danger: #fb7185;
+  --c-danger-soft: #2b1220;
+  --c-ok: #34d399;
+  --c-ok-soft: #06281f;
+  --c-warn: #fbbf24;
+  --c-warn-soft: #2a1f0c;
+  --c-info: #60a5fa;
+  --c-info-soft: #101f38;
+  --c-violet: #a78bfa;
+  --c-violet-soft: #1c1733;
+
+  --shadow-row: 0 1px 2px rgb(0 0 0 / 0.45);
+  --shadow-pop: 0 10px 30px -12px rgb(0 0 0 / 0.72), 0 2px 6px rgb(0 0 0 / 0.45);
+}
+
+@theme inline {
+  --color-canvas: var(--c-canvas);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-3: var(--c-ink-3);
+
+  --color-brand: var(--c-brand);
+  --color-brand-bright: var(--c-brand-bright);
+  --color-brand-hover: var(--c-brand-hover);
+  --color-brand-fg: var(--c-brand-fg);
+  --color-brand-soft: var(--c-brand-soft);
+  --color-brand-line: var(--c-brand-line);
+  --color-hero: var(--c-hero);
+  --color-hero-line: var(--c-hero-line);
+
+  --color-cta: var(--c-cta);
+  --color-cta-hover: var(--c-cta-hover);
+  --color-cta-fg: var(--c-cta-fg);
+  --color-cta-soft: var(--c-cta-soft);
+  --color-cta-line: var(--c-cta-line);
+
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-ok: var(--c-ok);
+  --color-ok-soft: var(--c-ok-soft);
+  --color-warn: var(--c-warn);
+  --color-warn-soft: var(--c-warn-soft);
+  --color-info: var(--c-info);
+  --color-info-soft: var(--c-info-soft);
+  --color-violet: var(--c-violet);
+  --color-violet-soft: var(--c-violet-soft);
+
+  /*
+   * Crisper corners. Every radius in the app resolves through these tokens
+   * (`rounded-full` excepted, which is deliberate on pills and circular
+   * controls), so the whole site's roundedness is tuned from right here.
+   * `--radius-2xl` is declared rather than inherited — cards use it, and
+   * Tailwind's stock value is 16px.
+   */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 5px;
+  --radius-xl: 7px;
+  --radius-2xl: 9px;
+  --radius-3xl: 12px;
+
+  --shadow-row: var(--shadow-row);
+  --shadow-pop: var(--shadow-pop);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', Consolas, 'SF Mono', monospace;
+
+  /* The one easing curve, applied to hovers, overlays and presses at 200–300ms. */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Chrome sits a notch below body copy — the data should out-shout the controls. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+}
+
+/*
+ * The one treatment for full-bleed brand panels (browse hero, auth aside). Both
+ * themes resolve it from --c-hero-gradient, so the panels can never drift apart.
+ */
+@utility bg-hero-gradient {
+  background-color: var(--c-hero);
+  background-image: var(--c-hero-gradient);
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--c-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--c-canvas);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Prices, counts and specs are compared column-to-column, and re-render on every
+     filter change — tabular figures stop the digits jittering as values swap. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+

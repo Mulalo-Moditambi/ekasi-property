@@ -172,6 +172,30 @@ public sealed class SearchPropertiesQueryHandlerTests : BaseHandlerTest
     }
 
     [Fact]
+    public async Task Handle_Should_FilterByAmenities()
+    {
+        // Arrange
+        await using TestDbContext context = CreateDbContext();
+        Property withParking = PropertyTestData.CreateProperty(Guid.NewGuid());
+        withParking.HasParking = true;
+        Property withoutParking = PropertyTestData.CreateProperty(Guid.NewGuid());
+        withoutParking.HasParking = false;
+        context.Properties.AddRange(withParking, withoutParking);
+        await context.SaveChangesAsync();
+
+        var query = new SearchPropertiesQuery(null, null, null, null, null, null, HasParking: true);
+        var handler = new SearchPropertiesQueryHandler(context);
+
+        // Act
+        Result<SearchPropertiesResponse> result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.ShouldBeTrue();
+        result.Value.Items.Count.ShouldBe(1);
+        result.Value.Items[0].Id.ShouldBe(withParking.Id);
+    }
+
+    [Fact]
     public async Task Handle_Should_ClampInvalidPaging()
     {
         // Arrange

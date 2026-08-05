@@ -5,6 +5,11 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - ConnectionStrings__Database=Server=mssql;Database=EkasiProperty;User Id=sa;Password=EkasiP@ssw0rd!;TrustServerCertificate=True
+      # UseDevelopmentStorage=true resolves to 127.0.0.1, which inside this container is the
+      # container itself, so the endpoint is spelled out against the compose service instead.
+      # The blob URLs handed to the browser use this same host name, so add
+      # "127.0.0.1 azurite" to your hosts file when running the whole stack in Compose.
+      - AzureBlobStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
     ports:
       - "8080"
       - "8081"

@@ -250,4 +250,105 @@ public sealed class PropertiesTests(IntegrationTestWebAppFactory factory) : Base
         // Assert
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    private sealed record MyPropertyDto(Guid Id, int Status);
+
+    private sealed record MyPagedResultDto(List<MyPropertyDto> Items, int TotalCount);
+
+    [Fact]
+    public async Task GetMyProperties_Should_ReturnUnauthorized_WhenTokenIsMissing()
+    {
+        // Act
+        HttpResponseMessage response = await HttpClient.GetAsync("properties/mine");
+
+        // Assert
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task GetMyProperties_Should_ReturnOnlyTheCallersListings_IncludingNonListedStatuses()
+    {
+        // Arrange
+        (Guid ownerId, AccessTokens ownerTokens) = await RegisterAndLoginAsync();
+        Authenticate(ownerTokens.AccessToken);
+        Guid propertyId = await CreatePropertyAsync(ownerId);
+        (await HttpClient.PutAsync($"properties/{propertyId}/withdraw", null)).EnsureSuccessStatusCode();
+
+        (Guid otherOwnerId, AccessTokens otherTokens) = await RegisterAndLoginAsync();
+        Authenticate(otherTokens.AccessToken);
+        Guid otherPropertyId = await CreatePropertyAsync(otherOwnerId);
+
+        Authenticate(ownerTokens.AccessToken);
+
+        // Act
+        HttpResponseMessage response = await HttpClient.GetAsync("properties/mine");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        MyPagedResultDto? results = await response.Content.ReadFromJsonAsync<MyPagedResultDto>();
+        results!.Items.ShouldContain(p => p.Id == propertyId && p.Status == 3);
+        results.Items.ShouldNotContain(p => p.Id == otherPropertyId);
+    }
+
+    [Fact]
+    public async Task DeleteImage_Should_RemoveImage_FromTheListing()
+    {
+        // Arrange
+        (Guid ownerId, AccessTokens tokens) = await RegisterAndLoginAsync();
+        Authenticate(tokens.AccessToken);
+        Guid propertyId = await CreatePropertyAsync(ownerId);
+
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47]);
+        file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(file, "files", "photo.png");
+        HttpResponseMessage uploadResponse = await HttpClient.PostAsync($"properties/{propertyId}/images", form);
+        uploadResponse.EnsureSuccessStatusCode();
+        List<Guid>? imageIds = await uploadResponse.Content.ReadFromJsonAsync<List<Guid>>();
+        Guid imageId = imageIds![0];
+
+        // Act
+        HttpResponseMessage deleteResponse = await HttpClient.DeleteAsync($"properties/{propertyId}/images/{imageId}");
+
+        // Assert
+        deleteResponse.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        HttpResponseMessage getResponse = await HttpClient.GetAsync($"properties/{propertyId}");
+        getResponse.EnsureSuccessStatusCode();
+        PropertyImagesDto? property = await getResponse.Content.ReadFromJsonAsync<PropertyImagesDto>();
+        property!.Images.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ReorderImages_Should_UpdateDisplayOrder()
+    {
+        // Arrange
+        (Guid ownerId, AccessTokens tokens) = await RegisterAndLoginAsync();
+        Authenticate(tokens.AccessToken);
+        Guid propertyId = await CreatePropertyAsync(ownerId);
+
+        using var form = new MultipartFormDataContent();
+        var first = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47]);
+        first.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(first, "files", "first.png");
+        var second = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47]);
+        second.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        form.Add(second, "files", "second.png");
+        HttpResponseMessage uploadResponse = await HttpClient.PostAsync($"properties/{propertyId}/images", form);
+        uploadResponse.EnsureSuccessStatusCode();
+        List<Guid>? imageIds = await uploadResponse.Content.ReadFromJsonAsync<List<Guid>>();
+        var reorderRequest = new { imageIds = new[] { imageIds![1], imageIds[0] } };
+
+        // Act
+        HttpResponseMessage reorderResponse = await HttpClient.PutAsJsonAsync($"properties/{propertyId}/images/order", reorderRequest);
+
+        // Assert
+        reorderResponse.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+
+        HttpResponseMessage getResponse = await HttpClient.GetAsync($"properties/{propertyId}");
+        getResponse.EnsureSuccessStatusCode();
+        PropertyImagesDto? property = await getResponse.Content.ReadFromJsonAsync<PropertyImagesDto>();
+        property!.Images[0].Id.ShouldBe(imageIds[1]);
+        property.Images[1].Id.ShouldBe(imageIds[0]);
+    }
 }

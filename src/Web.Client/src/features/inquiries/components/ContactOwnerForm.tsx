@@ -1,90 +1,103 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { submitInquiry } from '../api';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { CheckCircle2, Send } from 'lucide-react';
+import { errorMessage } from '../../../shared/api/queryClient';
+import { Button } from '../../../shared/ui/button';
+import { Field, Notice, Textarea } from '../../../shared/ui/form';
+import { Input } from '../../../shared/ui/input';
+import { emptyInquiry, inquirySchema, toInquiryRequest } from '../inquirySchema';
+import type { InquiryFormValues } from '../inquirySchema';
+import { useSubmitInquiry } from '../queries';
 
 export function ContactOwnerForm({ propertyId }: { propertyId: string }) {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState(false);
+  const submit = useSubmitInquiry(propertyId);
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<InquiryFormValues>({
+    resolver: zodResolver(inquirySchema),
+    defaultValues: emptyInquiry,
+    mode: 'onTouched',
+  });
 
+  async function onValid(values: InquiryFormValues) {
     try {
-      await submitInquiry(propertyId, {
-        name: form.name,
-        email: form.email,
-        phone: form.phone || undefined,
-        message: form.message,
-      });
-      setSent(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not send your message');
-      setBusy(false);
+      await submit.mutateAsync(toInquiryRequest(values));
+    } catch (error) {
+      setError('root', { message: errorMessage(error, 'Could not send your message') });
     }
   }
 
-  if (sent) {
+  if (submit.isSuccess) {
     return (
-      <section className="contact-owner">
-        <h2>Contact the owner</h2>
-        <p className="success">Your message was sent. The owner will get back to you on the details you provided.</p>
-      </section>
+      <div className="flex flex-col items-center gap-2 py-4 text-center">
+        <CheckCircle2 className="size-8 text-cta" />
+        <h2 className="text-base font-semibold text-ink">Message sent</h2>
+        <p className="text-sm leading-relaxed text-ink-2">
+          The owner will get back to you on the details you provided.
+        </p>
+      </div>
     );
   }
 
   return (
-    <section className="contact-owner">
-      <h2>Contact the owner</h2>
-      <form className="stacked-form" onSubmit={handleSubmit}>
-        <label>
-          Your name
-          <input
+    <div>
+      <h2 className="text-base font-semibold tracking-tight text-ink">Contact the owner</h2>
+      <p className="mt-1 text-sm text-ink-2">
+        No agents, no commission — you deal with them directly.
+      </p>
+
+      <form className="mt-4 space-y-3" noValidate onSubmit={handleSubmit(onValid)}>
+        <Field label="Your name" error={errors.name?.message}>
+          <Input
             type="text"
-            required
             maxLength={100}
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            autoComplete="name"
+            aria-invalid={Boolean(errors.name)}
+            {...register('name')}
           />
-        </label>
-        <label>
-          Email
-          <input
+        </Field>
+
+        <Field label="Email" error={errors.email?.message}>
+          <Input
             type="email"
-            required
             maxLength={255}
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            autoComplete="email"
+            aria-invalid={Boolean(errors.email)}
+            {...register('email')}
           />
-        </label>
-        <label>
-          Phone (optional)
-          <input
+        </Field>
+
+        <Field label="Phone" hint="Optional" error={errors.phone?.message}>
+          <Input
             type="tel"
             maxLength={20}
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            autoComplete="tel"
+            aria-invalid={Boolean(errors.phone)}
+            {...register('phone')}
           />
-        </label>
-        <label>
-          Message
-          <textarea
-            required
+        </Field>
+
+        <Field label="Message" error={errors.message?.message}>
+          <Textarea
             maxLength={2000}
             rows={4}
             placeholder="e.g. Is this still available? When can I come view it?"
-            value={form.message}
-            onChange={(e) => setForm({ ...form, message: e.target.value })}
+            aria-invalid={Boolean(errors.message)}
+            {...register('message')}
           />
-        </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={busy}>
-          {busy ? 'Sending…' : 'Send message'}
-        </button>
+        </Field>
+
+        {errors.root && <Notice>{errors.root.message}</Notice>}
+
+        <Button type="submit" variant="cta" size="lg" className="w-full" disabled={isSubmitting}>
+          <Send />
+          {isSubmitting ? 'Sending…' : 'Send message'}
+        </Button>
       </form>
-    </section>
+    </div>
   );
 }

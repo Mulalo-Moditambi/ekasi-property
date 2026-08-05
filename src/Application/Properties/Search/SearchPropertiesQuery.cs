@@ -12,4 +12,8 @@ public sealed record SearchPropertiesQuery(
     int? MinBedrooms,
     int Page = 1,
     int PageSize = 20,
-    string? Sort = null) : IQuery<SearchPropertiesResponse>;
+    string? Sort = null,
+    bool? HasElectricity = null,
+    bool? WaterIncluded = null,
+    bool? HasOwnEntrance = null,
+    bool? HasParking = null) : IQuery<SearchPropertiesResponse>;
