@@ -195,7 +195,7 @@ public sealed class PropertiesTests(IntegrationTestWebAppFactory factory) : Base
         Guid propertyId = await CreatePropertyAsync(userId);
 
         using var form = new MultipartFormDataContent();
-        var file = new ByteArrayContent([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+        var file = new ByteArrayContent(PngHeader);
         file.Headers.ContentType = new MediaTypeHeaderValue("image/png");
         form.Add(file, "files", "photo.png");
 
@@ -211,11 +211,28 @@ public sealed class PropertiesTests(IntegrationTestWebAppFactory factory) : Base
         getResponse.EnsureSuccessStatusCode();
         PropertyImagesDto? property = await getResponse.Content.ReadFromJsonAsync<PropertyImagesDto>();
         property!.Images.Count.ShouldBe(1);
-        property.Images[0].Url.ShouldStartWith("/uploads/");
 
-        HttpResponseMessage imageResponse = await HttpClient.GetAsync(property.Images[0].Url);
+        // Blob storage hands out absolute URLs; the browser fetches them directly rather than
+        // through the API, so the stored value must be a complete address.
+        Uri.TryCreate(property.Images[0].Url, UriKind.Absolute, out Uri? imageUri).ShouldBeTrue();
+        imageUri!.AbsolutePath.ShouldContain("/uploads/");
+
+        /*
+         * Deliberately a plain HttpClient, not the inherited one. The test server's client
+         * routes every request into the in-memory app whatever the host, so fetching an
+         * absolute blob URL through it would fall through to the SPA fallback and return
+         * index.html with a 200 — proving nothing about whether the image is really served.
+         */
+        using var blobClient = new HttpClient();
+        HttpResponseMessage imageResponse = await blobClient.GetAsync(imageUri);
+
         imageResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        // Anonymous read: no credential was attached, which is what the public container grants.
+        imageResponse.Content.Headers.ContentType?.MediaType.ShouldBe("image/png");
+        (await imageResponse.Content.ReadAsByteArrayAsync()).ShouldBe(PngHeader);
     }
+
+    private static readonly byte[] PngHeader = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
     [Fact]
     public async Task AddImages_Should_ReturnUnauthorized_WhenTokenIsMissing()
